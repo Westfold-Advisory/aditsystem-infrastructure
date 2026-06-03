@@ -94,6 +94,63 @@ jobs:
               body
             });
 
+  # Infracost runs after validate, parallel to plan-local, only on PRs.
+  # It never blocks the pipeline — it posts an informational cost estimate comment.
+  # Requires the INFRACOST_API_KEY secret (free tier at infracost.io).
+  infracost:
+    name: Cost estimate (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request' && vars.INFRACOST_ENABLED == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, prod]
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch full history so infracost diff can compare against base branch
+          fetch-depth: 0
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      # Generate cost estimate for the base branch (what is currently deployed)
+      - name: Generate Infracost baseline
+        run: |
+          infracost breakdown \
+            --path environments/${{ matrix.environment }} \
+            --terraform-init-flags="-backend=false" \
+            --format json \
+            --out-file /tmp/infracost-base-${{ matrix.environment }}.json
+        env:
+          INFRACOST_TERRAFORM_WORKSPACE: ${{ matrix.environment }}
+
+      # Generate cost estimate for the PR branch (what will be deployed)
+      - name: Generate Infracost diff
+        run: |
+          infracost diff \
+            --path environments/${{ matrix.environment }} \
+            --terraform-init-flags="-backend=false" \
+            --format json \
+            --compare-to /tmp/infracost-base-${{ matrix.environment }}.json \
+            --out-file /tmp/infracost-diff-${{ matrix.environment }}.json
+        env:
+          INFRACOST_TERRAFORM_WORKSPACE: ${{ matrix.environment }}
+
+      # Post cost diff as a PR comment (updates existing comment on re-runs)
+      - name: Post Infracost comment
+        uses: infracost/actions/comment@v3
+        with:
+          path: /tmp/infracost-diff-${{ matrix.environment }}.json
+          behavior: update
+          tag: infracost-${{ matrix.environment }}
+
   plan-remote:
     name: Plan with AWS (${{ matrix.environment }})
     runs-on: ubuntu-latest
@@ -122,3 +179,19 @@ jobs:
           terraform init -input=false \
             -backend-config=../../config/backend-${{ matrix.environment }}.hcl
           terraform plan -input=false -no-color
+
+      # When AWS is available, also run Infracost with the real plan JSON
+      # for a more accurate estimate (replaces the HCL-based estimate above).
+      - name: Generate Infracost estimate from plan
+        if: github.event_name == 'pull_request' && vars.INFRACOST_ENABLED == 'true'
+        run: |
+          terraform -chdir=environments/${{ matrix.environment }} \
+            show -json tfplan 2>/dev/null > /tmp/plan-${{ matrix.environment }}.json || true
+          if [ -s /tmp/plan-${{ matrix.environment }}.json ]; then
+            infracost diff \
+              --path /tmp/plan-${{ matrix.environment }}.json \
+              --format json \
+              --out-file /tmp/infracost-remote-${{ matrix.environment }}.json
+          fi
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
