@@ -7,7 +7,7 @@ Infraestructura como código para el proyecto **ADITSYSTEM**.
 | Repo | URL |
 |------|-----|
 | Frontend | https://github.com/Arcoexplsoivo1/ADITSYSTEM |
-| Backend | https://github.com/eperez-pixel/aditsystem-backend |
+| Backend | https://github.com/ervicperezdev/aditsystem-backend |
 
 ## Arquitectura prevista (MVP)
 
