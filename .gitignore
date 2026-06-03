@@ -25,3 +25,12 @@ terraform.rc
 
 # Plan output
 *.tfplan
+
+# Backend config con nombres reales (copiar desde *.hcl.example)
+config/*.hcl
+!config/*.hcl.example
+
+# Bootstrap state local
+bootstrap/terraform.tfstate
+bootstrap/terraform.tfstate.backup
+bootstrap/.terraform/

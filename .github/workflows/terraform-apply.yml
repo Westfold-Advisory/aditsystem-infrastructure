@@ -1,0 +1,45 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Entorno a aplicar
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  apply:
+    name: Apply (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: >-
+      ${{
+        inputs.environment == 'prod' && 'production' ||
+        inputs.environment == 'staging' && 'staging' ||
+        'development'
+      }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+          terraform_wrapper: false
+      - name: terraform apply
+        working-directory: environments/${{ inputs.environment }}
+        run: |
+          terraform init -input=false \
+            -backend-config=../../config/backend-${{ inputs.environment }}.hcl
+          terraform plan -input=false -out=tfplan
+          terraform apply -input=false -auto-approve tfplan

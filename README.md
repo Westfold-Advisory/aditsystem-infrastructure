@@ -54,10 +54,30 @@ terraform fmt -check -recursive ../..
 terraform validate
 ```
 
-El backend remoto en S3 está comentado en `backend.tf` hasta completar el bootstrap (TRA-47).
+## CI/CD (GitHub Actions)
+
+| Workflow | Cuándo | Acciones |
+|----------|--------|----------|
+| [terraform-ci.yml](.github/workflows/terraform-ci.yml) | PR y push a `main` | `fmt`, `validate`, `plan` |
+| [terraform-apply.yml](.github/workflows/terraform-apply.yml) | Manual (`workflow_dispatch`) | `plan` + `apply` con GitHub Environment |
+
+Documentación:
+
+- [docs/terraform-setup.md](docs/terraform-setup.md) — bootstrap S3/DynamoDB + OIDC
+- [docs/github-secrets-checklist.md](docs/github-secrets-checklist.md) — secrets y variables
+
+### Bootstrap del remote state (una vez)
+
+```bash
+cd bootstrap
+cp terraform.tfvars.example terraform.tfvars
+terraform init && terraform apply
+```
+
+Luego copia `config/backend-*.hcl.example` → `config/backend-*.hcl` con los valores del output.
 
 ## Convenciones
 
 - Sin secretos en el repositorio; usar variables de entorno, GitHub Secrets o AWS Secrets Manager.
 - Un archivo `*.tfvars` por entorno (no versionado; ver `.gitignore`).
-- Pipeline de CI en tarea TRA-47.
+- Apply a producción solo vía workflow manual + environment `production`.
