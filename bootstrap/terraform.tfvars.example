@@ -1,3 +1,5 @@
 aws_region        = "us-east-1"
 project_name      = "aditsystem"
-state_bucket_name = "aditsystem-tf-state-TU_ACCOUNT_ID"
+state_bucket_name = "aditsystem-tf-state-TU_ACCOUNT_ID"   # debe ser único globalmente
+github_org        = "ervicperezdev"
+github_repo       = "aditsystem-infrastructure"
