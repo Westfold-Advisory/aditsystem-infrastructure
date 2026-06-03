@@ -22,7 +22,6 @@ Por cada entorno, copia el ejemplo y rellena valores reales (no versionar):
 
 ```bash
 cp config/backend-dev.hcl.example config/backend-dev.hcl
-cp config/backend-staging.hcl.example config/backend-staging.hcl
 cp config/backend-prod.hcl.example config/backend-prod.hcl
 ```
 
@@ -106,7 +105,6 @@ Crea en el repo **Settings → Environments**:
 | Environment | Uso |
 |-------------|-----|
 | `development` | Apply manual a `dev` |
-| `staging` | Apply a staging |
 | `production` | Apply a prod — activar *Required reviewers* |
 
 El workflow `terraform-apply.yml` usa `workflow_dispatch` y el environment según el input elegido.
@@ -122,7 +120,7 @@ El workflow `terraform-apply.yml` usa `workflow_dispatch` y el environment segú
 
 ## 6. Buenas prácticas
 
-- Un **state key** por entorno (`dev/`, `staging/`, `prod/`).
+- Un **state key** por entorno (`dev/`, `prod/`).
 - Bucket con **versionado** y **cifrado** habilitados (el bootstrap ya lo hace).
 - **DynamoDB** para locking — evita corrupción de state concurrente.
 - No commitear `*.tfvars`, `config/*.hcl` ni credenciales.

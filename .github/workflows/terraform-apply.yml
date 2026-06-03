@@ -9,7 +9,6 @@ on:
         type: choice
         options:
           - dev
-          - staging
           - prod
 
 permissions:
@@ -23,7 +22,6 @@ jobs:
     environment: >-
       ${{
         inputs.environment == 'prod' && 'production' ||
-        inputs.environment == 'staging' && 'staging' ||
         'development'
       }}
     steps:

@@ -1,5 +1,0 @@
-bucket         = "REPLACE_ME-tf-state"
-key            = "staging/terraform.tfstate"
-region         = "us-east-1"
-dynamodb_table = "REPLACE_ME-tf-locks"
-encrypt        = true

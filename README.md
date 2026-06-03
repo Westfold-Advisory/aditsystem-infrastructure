@@ -36,7 +36,6 @@ flowchart LR
 ```
 environments/
   dev/          # Entorno de desarrollo
-  staging/      # Pre-producción
   prod/         # Producción
 modules/        # Módulos reutilizables
 backend.tf      # Plantilla de remote state (S3 + DynamoDB)

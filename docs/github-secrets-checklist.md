@@ -27,13 +27,11 @@ Repite `AWS_ROLE_ARN` por environment si usas roles distintos:
 | Environment | Rol sugerido |
 |-------------|--------------|
 | `development` | Rol con permisos amplios en cuenta dev |
-| `staging` | Rol restringido a recursos staging |
 | `production` | Rol mínimo + aprobación manual |
 
 ## Environments a crear
 
 - [ ] `development`
-- [ ] `staging`
 - [ ] `production` (con protection rules: reviewers, solo `main`)
 
 ## Verificación
