@@ -16,7 +16,7 @@ Marca cada ítem cuando esté configurado en **Settings → Secrets and variable
 
 | Variable | Ejemplo | Descripción |
 |----------|---------|-------------|
-| `AWS_REGION` | `us-east-1` | Región por defecto |
+| `AWS_REGION` | `mx-central-1` | Región por defecto |
 | `TF_REMOTE_STATE_ENABLED` | `true` | Activa plan con backend S3 en CI |
 | `INFRACOST_ENABLED` | `true` | Activa el job de estimación de costes Infracost en PRs |
 | `TF_STATE_BUCKET` | `aditsystem-tf-state-...` | Bucket real del remote state |
