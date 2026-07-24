@@ -3,7 +3,7 @@ data "aws_caller_identity" "current" {}
 locals {
   bucket_name = coalesce(
     var.bucket_name_override,
-    "${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-frontend"
+    "${var.project_name}-${var.environment}-${var.aws_region}-${data.aws_caller_identity.current.account_id}-frontend"
   )
 
   github_oidc_provider_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"

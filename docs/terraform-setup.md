@@ -129,6 +129,8 @@ Los entornos `dev` y `prod` ahora crean:
 - Outputs listos para publicar en GitHub Actions del frontend
 - Región de despliegue por defecto en `mx-central-1`
 
+El nombre del bucket sigue el patrón `aditsystem-<env>-<region>-<account>-frontend`, de forma que cambiar de región cree un bucket nuevo en vez de reutilizar el nombre anterior.
+
 Para `prod`, el trust policy del rol queda acotado al GitHub Environment `production`, que coincide con `ADITSYSTEM/.github/workflows/ci.yml`.
 
 Después del apply, consulta la URL pública del sitio con el output `frontend_website_url`.
