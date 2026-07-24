@@ -95,6 +95,8 @@ Cuando estén configurados, activa en el repo:
 | Variable | Valor |
 |----------|-------|
 | `TF_REMOTE_STATE_ENABLED` | `true` |
+| `TF_STATE_BUCKET` | output `state_bucket` del bootstrap |
+| `TF_STATE_LOCK_TABLE` | output `dynamodb_table` del bootstrap |
 
 Esto habilita el job `plan-remote` en el workflow de CI.
 
@@ -108,6 +110,16 @@ Crea en el repo **Settings → Environments**:
 | `production` | Apply a prod — activar *Required reviewers* |
 
 El workflow `terraform-apply.yml` usa `workflow_dispatch` y el environment según el input elegido.
+
+## 4.1 Parámetros exportados para el pipeline del frontend
+
+Los entornos `dev` y `prod` ahora crean:
+
+- Bucket S3 privado para artefactos del frontend
+- Rol IAM con OIDC para `Westfold-Advisory/ADITSYSTEM`
+- Outputs listos para publicar en GitHub Actions del frontend
+
+Para `prod`, el trust policy del rol queda acotado al GitHub Environment `production`, que coincide con `ADITSYSTEM/.github/workflows/ci.yml`.
 
 ## 5. Pipelines
 
