@@ -94,6 +94,96 @@ jobs:
               body
             });
 
+  # Infracost runs after validate, parallel to plan-local, only on PRs.
+  # Uses the Infracost CLI directly — no broken sub-actions.
+  # Never blocks the pipeline; posts an informational cost estimate comment.
+  # Requires: INFRACOST_API_KEY secret + INFRACOST_ENABLED=true variable.
+  infracost:
+    name: Cost estimate (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request' && vars.INFRACOST_ENABLED == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, prod]
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Install Infracost CLI only (the only working sub-action)
+      - name: Setup Infracost CLI
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      # Checkout base branch into a separate worktree so we can diff without
+      # switching branches in the main workspace
+      - name: Generate cost baseline (base branch)
+        run: |
+          git worktree add /tmp/base-checkout origin/${{ github.base_ref }}
+          infracost breakdown \
+            --path /tmp/base-checkout/environments/${{ matrix.environment }} \
+            --terraform-init-flags="-backend=false" \
+            --format json \
+            --out-file /tmp/infracost-base.json
+
+      # Estimate cost on the PR branch and diff against baseline
+      - name: Generate cost diff (PR branch)
+        run: |
+          infracost diff \
+            --path environments/${{ matrix.environment }} \
+            --terraform-init-flags="-backend=false" \
+            --compare-to /tmp/infracost-base.json \
+            --format json \
+            --out-file /tmp/infracost-diff.json
+
+      # Render the diff as a GitHub-flavoured markdown comment
+      - name: Render cost comment
+        run: |
+          infracost output \
+            --path /tmp/infracost-diff.json \
+            --format github-comment \
+            --out-file /tmp/infracost-comment.md
+
+      # Post or update a single comment per environment using github-script
+      - name: Post cost estimate comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const env = '${{ matrix.environment }}';
+            const tag = `<!-- infracost-${env} -->`;
+            const rendered = fs.readFileSync('/tmp/infracost-comment.md', 'utf8');
+            const body = `${tag}\n### 💰 Coste estimado — \`${env}\`\n\n${rendered}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body && c.body.includes(tag));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
   plan-remote:
     name: Plan with AWS (${{ matrix.environment }})
     runs-on: ubuntu-latest
@@ -121,4 +211,4 @@ jobs:
         run: |
           terraform init -input=false \
             -backend-config=../../config/backend-${{ matrix.environment }}.hcl
-          terraform plan -input=false -no-color
+          terraform plan -input=false -no-color -out=tfplan

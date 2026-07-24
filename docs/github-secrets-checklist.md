@@ -9,6 +9,7 @@ Marca cada ítem cuando esté configurado en **Settings → Secrets and variable
 | Secret | ¿Requerido? | Descripción |
 |--------|-------------|-------------|
 | `AWS_ROLE_ARN` | Sí (para plan/apply con AWS) | ARN del rol IAM con trust OIDC hacia este repo |
+| `INFRACOST_API_KEY` | Sí (para estimación de costes) | API key gratuita en [infracost.io/docs/](https://infracost.io/docs/) |
 | `TF_VAR_db_password` | No (evitar si es posible) | Solo si no usas Secrets Manager; preferir SSM/Secrets Manager |
 
 ## Variables (repository)
@@ -17,6 +18,7 @@ Marca cada ítem cuando esté configurado en **Settings → Secrets and variable
 |----------|---------|-------------|
 | `AWS_REGION` | `us-east-1` | Región por defecto |
 | `TF_REMOTE_STATE_ENABLED` | `true` | Activa plan con backend S3 en CI |
+| `INFRACOST_ENABLED` | `true` | Activa el job de estimación de costes Infracost en PRs |
 | `TF_STATE_BUCKET` | `aditsystem-tf-state-...` | Referencia documental (opcional) |
 | `TF_STATE_LOCK_TABLE` | `aditsystem-tf-locks` | Referencia documental (opcional) |
 
@@ -37,5 +39,6 @@ Repite `AWS_ROLE_ARN` por environment si usas roles distintos:
 ## Verificación
 
 1. Abre un PR de prueba → workflow **Terraform CI** en verde (`fmt`, `validate`, `plan-local`).
-2. Con OIDC configurado y `TF_REMOTE_STATE_ENABLED=true` → job `plan-remote` en verde.
-3. En **Actions → Terraform Apply → Run workflow** → elige `dev` y confirma en environment `development`.
+2. Con `INFRACOST_ENABLED=true` y `INFRACOST_API_KEY` configurado → job `infracost` comenta el coste estimado en el PR.
+3. Con OIDC configurado y `TF_REMOTE_STATE_ENABLED=true` → job `plan-remote` en verde.
+4. En **Actions → Terraform Apply → Run workflow** → elige `dev` y confirma en environment `development`.

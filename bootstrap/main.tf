@@ -186,7 +186,7 @@ output "github_actions_role_arn" {
 
 output "backend_config_dev" {
   description = "Contenido para config/backend-dev.hcl"
-  value = <<-HCL
+  value       = <<-HCL
     bucket         = "${aws_s3_bucket.tf_state.bucket}"
     key            = "dev/terraform.tfstate"
     region         = "${var.aws_region}"
@@ -197,7 +197,7 @@ output "backend_config_dev" {
 
 output "backend_config_prod" {
   description = "Contenido para config/backend-prod.hcl"
-  value = <<-HCL
+  value       = <<-HCL
     bucket         = "${aws_s3_bucket.tf_state.bucket}"
     key            = "prod/terraform.tfstate"
     region         = "${var.aws_region}"
