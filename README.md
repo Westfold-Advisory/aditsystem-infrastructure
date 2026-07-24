@@ -65,6 +65,13 @@ Documentación:
 - [docs/terraform-setup.md](docs/terraform-setup.md) — bootstrap S3/DynamoDB + OIDC
 - [docs/github-secrets-checklist.md](docs/github-secrets-checklist.md) — secrets y variables
 
+Los entornos Terraform también exponen outputs para poblar el repo frontend `Westfold-Advisory/ADITSYSTEM` con:
+
+- `AWS_ROLE_ARN`
+- `AWS_REGION`
+- `S3_BUCKET`
+- `CLOUDFRONT_DISTRIBUTION_ID` opcional
+
 ### Bootstrap del remote state (una vez)
 
 ```bash
