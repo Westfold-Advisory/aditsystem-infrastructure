@@ -82,7 +82,14 @@ Crea un rol con trust policy (ajusta `ORG` y repo):
 }
 ```
 
-Adjunta políticas según lo que Terraform gestione (mínimo para empezar: permisos acotados por entorno; en MVP puedes usar `PowerUserAccess` solo en `dev` y restringir `prod`).
+El bootstrap de este repo ya puede crear un role con permisos explícitos para:
+
+- backend remoto de Terraform en S3
+- tabla DynamoDB legacy del bootstrap
+- buckets S3 del frontend administrados por Terraform
+- roles y policies IAM `aditsystem-*` creados por los entornos
+
+Si el role ya existía y el `apply` falla por permisos como `s3:GetBucketPolicy`, vuelve a ejecutar `bootstrap/` para que Terraform actualice la policy del role antes de relanzar el workflow.
 
 ### 3.3 Secrets y variables en GitHub
 

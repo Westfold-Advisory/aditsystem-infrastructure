@@ -31,6 +31,8 @@ terraform plan   # revisa que solo crea lo esperado
 terraform apply
 ```
 
+Si el role ya existía y el pipeline falla por permisos AWS, vuelve a ejecutar este bootstrap para que Terraform actualice la policy adjunta al role antes de relanzar `Terraform Apply`.
+
 ## Outputs importantes
 
 Tras el apply, copia los outputs para completar la configuración:
@@ -64,6 +66,7 @@ En **Settings → Secrets and variables → Actions → Variables**:
 |----------|-------|
 | `AWS_REGION` | La región que usaste (ej. `us-east-1`) |
 | `TF_REMOTE_STATE_ENABLED` | `true` (activa el job `plan-remote` en CI) |
+| `TF_BACKEND_REGION` | Región real del bucket de state (ej. `us-east-1`) |
 
 ### 4. Crear los GitHub Environments
 
