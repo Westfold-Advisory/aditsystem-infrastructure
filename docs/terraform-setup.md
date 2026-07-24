@@ -127,6 +127,7 @@ Los entornos `dev` y `prod` ahora crean:
 - Bucket S3 para frontend con S3 Website Hosting
 - Rol IAM con OIDC para `Westfold-Advisory/ADITSYSTEM`
 - Outputs listos para publicar en GitHub Actions del frontend
+- Región de despliegue por defecto en `mx-central-1`
 
 Para `prod`, el trust policy del rol queda acotado al GitHub Environment `production`, que coincide con `ADITSYSTEM/.github/workflows/ci.yml`.
 

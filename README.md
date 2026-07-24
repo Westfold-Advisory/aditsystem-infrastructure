@@ -68,7 +68,7 @@ Documentación:
 Los entornos Terraform también exponen outputs para poblar el repo frontend `Westfold-Advisory/ADITSYSTEM` con:
 
 - `AWS_ROLE_ARN`
-- `AWS_REGION`
+- `AWS_REGION` (`mx-central-1` por defecto para frontend)
 - `S3_BUCKET`
 - `CLOUDFRONT_DISTRIBUTION_ID` opcional
 - `frontend_website_url` para consultar el sitio cuando se publica con S3 Website Hosting
