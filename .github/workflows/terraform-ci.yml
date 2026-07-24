@@ -209,7 +209,6 @@ jobs:
       - name: terraform init & plan (remote state)
         env:
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
-          TF_STATE_LOCK_TABLE: ${{ vars.TF_STATE_LOCK_TABLE }}
           TF_BACKEND_REGION: ${{ vars.TF_BACKEND_REGION || vars.AWS_REGION }}
         working-directory: environments/${{ matrix.environment }}
         run: |
@@ -217,6 +216,6 @@ jobs:
             -backend-config="bucket=${TF_STATE_BUCKET}" \
             -backend-config="key=${{ matrix.environment }}/terraform.tfstate" \
             -backend-config="region=${TF_BACKEND_REGION}" \
-            -backend-config="dynamodb_table=${TF_STATE_LOCK_TABLE}" \
+            -backend-config="use_lockfile=true" \
             -backend-config="encrypt=true"
           terraform plan -input=false -no-color
