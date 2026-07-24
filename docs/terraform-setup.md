@@ -124,11 +124,13 @@ El workflow `terraform-apply.yml` usa `workflow_dispatch` y el environment segú
 
 Los entornos `dev` y `prod` ahora crean:
 
-- Bucket S3 privado para artefactos del frontend
+- Bucket S3 para frontend con S3 Website Hosting
 - Rol IAM con OIDC para `Westfold-Advisory/ADITSYSTEM`
 - Outputs listos para publicar en GitHub Actions del frontend
 
 Para `prod`, el trust policy del rol queda acotado al GitHub Environment `production`, que coincide con `ADITSYSTEM/.github/workflows/ci.yml`.
+
+Después del apply, consulta la URL pública del sitio con el output `frontend_website_url`.
 
 ## 5. Pipelines
 

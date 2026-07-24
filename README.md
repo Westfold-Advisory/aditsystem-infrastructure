@@ -71,6 +71,7 @@ Los entornos Terraform también exponen outputs para poblar el repo frontend `We
 - `AWS_REGION`
 - `S3_BUCKET`
 - `CLOUDFRONT_DISTRIBUTION_ID` opcional
+- `frontend_website_url` para consultar el sitio cuando se publica con S3 Website Hosting
 
 ### Bootstrap del remote state (una vez)
 

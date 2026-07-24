@@ -49,3 +49,7 @@ output "frontend_github_variables" {
     CLOUDFRONT_DISTRIBUTION_ID = module.frontend_deploy_target.cloudfront_distribution_id
   }
 }
+
+output "frontend_website_url" {
+  value = module.frontend_deploy_target.website_url
+}
