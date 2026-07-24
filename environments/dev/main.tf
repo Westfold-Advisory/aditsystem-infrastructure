@@ -25,6 +25,7 @@ module "frontend_deploy_target" {
 
   project_name              = "aditsystem"
   environment               = "dev"
+  aws_region                = var.aws_region
   frontend_repository_owner = "Westfold-Advisory"
   frontend_repository_name  = "ADITSYSTEM"
   github_environment_name   = "production"

@@ -8,6 +8,11 @@ variable "environment" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "Región AWS donde se crea el bucket frontend"
+  type        = string
+}
+
 variable "frontend_repository_owner" {
   description = "Owner del repositorio frontend en GitHub"
   type        = string

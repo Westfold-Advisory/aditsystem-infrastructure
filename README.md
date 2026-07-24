@@ -73,6 +73,8 @@ Los entornos Terraform también exponen outputs para poblar el repo frontend `We
 - `CLOUDFRONT_DISTRIBUTION_ID` opcional
 - `frontend_website_url` para consultar el sitio cuando se publica con S3 Website Hosting
 
+El nombre del bucket frontend incluye la región AWS para evitar conflictos al migrar un mismo entorno entre regiones distintas.
+
 ### Bootstrap del remote state (una vez)
 
 ```bash
