@@ -103,6 +103,7 @@ Cuando estén configurados, activa en el repo:
 |----------|-------|
 | `TF_REMOTE_STATE_ENABLED` | `true` |
 | `TF_STATE_BUCKET` | output `state_bucket` del bootstrap |
+| `AWS_REGION` | `mx-central-1` para desplegar el frontend en Mexico (Central) |
 | `TF_BACKEND_REGION` | región real del bucket de state, por ejemplo `us-east-1` |
 
 Esto habilita el job `plan-remote` en el workflow de CI.
@@ -127,6 +128,7 @@ Los entornos `dev` y `prod` ahora crean:
 - Bucket S3 para frontend con S3 Website Hosting
 - Rol IAM con OIDC para `Westfold-Advisory/ADITSYSTEM`
 - Outputs listos para publicar en GitHub Actions del frontend
+- Región de despliegue por defecto en `mx-central-1`
 
 Para `prod`, el trust policy del rol queda acotado al GitHub Environment `production`, que coincide con `ADITSYSTEM/.github/workflows/ci.yml`.
 

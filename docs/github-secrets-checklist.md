@@ -16,11 +16,11 @@ Marca cada ítem cuando esté configurado en **Settings → Secrets and variable
 
 | Variable | Ejemplo | Descripción |
 |----------|---------|-------------|
-| `AWS_REGION` | `us-east-1` | Región por defecto |
+| `AWS_REGION` | `mx-central-1` | Región por defecto para los recursos del frontend |
 | `TF_REMOTE_STATE_ENABLED` | `true` | Activa plan con backend S3 en CI |
 | `INFRACOST_ENABLED` | `true` | Activa el job de estimación de costes Infracost en PRs |
 | `TF_STATE_BUCKET` | `aditsystem-tf-state-...` | Bucket real del remote state |
-| `TF_BACKEND_REGION` | `us-east-1` | Región del bucket/tabla de state; usarla si difiere de `AWS_REGION` |
+| `TF_BACKEND_REGION` | `us-east-1` | Región del bucket/tabla de state; mantenerla separada si el state sigue fuera de `mx-central-1` |
 
 `TF_STATE_LOCK_TABLE` queda solo para setups legacy; el workflow actual usa `use_lockfile=true` en S3 y ya no requiere DynamoDB para locking.
 
