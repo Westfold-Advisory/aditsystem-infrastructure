@@ -23,7 +23,7 @@ cp terraform.tfvars.example terraform.tfvars
 
 Edita `terraform.tfvars`:
 - `state_bucket_name`: reemplaza `TU_ACCOUNT_ID` con tu AWS Account ID (`aws sts get-caller-identity --query Account --output text`)
-- Ajusta `aws_region` si no usas `us-east-1`
+- Ajusta `aws_region` si no usas `mx-central-1`
 
 ```bash
 terraform init
@@ -64,7 +64,7 @@ En **Settings → Secrets and variables → Actions → Variables**:
 
 | Variable | Valor |
 |----------|-------|
-| `AWS_REGION` | La región que usaste (ej. `us-east-1`) |
+| `AWS_REGION` | La región que usaste (ej. `mx-central-1`) |
 | `TF_REMOTE_STATE_ENABLED` | `true` (activa el job `plan-remote` en CI) |
 | `TF_BACKEND_REGION` | Región real del bucket de state (ej. `us-east-1`) |
 

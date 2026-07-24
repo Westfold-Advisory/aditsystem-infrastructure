@@ -1,4 +1,4 @@
-aws_region        = "us-east-1"
+aws_region        = "mx-central-1"
 project_name      = "aditsystem"
 state_bucket_name = "aditsystem-tf-state-TU_ACCOUNT_ID"   # debe ser único globalmente
 github_org        = "ervicperezdev"
