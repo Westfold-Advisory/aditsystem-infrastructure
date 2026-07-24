@@ -134,8 +134,9 @@ resource "aws_iam_role" "terraform_github" {
   description        = "Rol asumido por GitHub Actions para ejecutar Terraform"
 }
 
-# Política con permisos de Terraform sobre el state
-data "aws_iam_policy_document" "terraform_state" {
+# Política con permisos de Terraform sobre el state y los recursos que hoy
+# administra el repo (buckets frontend + roles/policies IAM asociados).
+data "aws_iam_policy_document" "terraform_github" {
   statement {
     sid     = "S3StateAccess"
     actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
@@ -150,23 +151,92 @@ data "aws_iam_policy_document" "terraform_state" {
     actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:DescribeTable"]
     resources = [aws_dynamodb_table.tf_lock.arn]
   }
+
+  statement {
+    sid = "ManageFrontendBuckets"
+    actions = [
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:GetBucketLocation",
+      "s3:GetBucketVersioning",
+      "s3:PutBucketVersioning",
+      "s3:GetEncryptionConfiguration",
+      "s3:PutEncryptionConfiguration",
+      "s3:GetBucketPublicAccessBlock",
+      "s3:PutBucketPublicAccessBlock",
+      "s3:DeleteBucketPublicAccessBlock",
+      "s3:GetBucketOwnershipControls",
+      "s3:PutBucketOwnershipControls",
+      "s3:DeleteBucketOwnershipControls",
+      "s3:GetBucketPolicy",
+      "s3:PutBucketPolicy",
+      "s3:DeleteBucketPolicy",
+      "s3:ListBucket",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.project_name}-*",
+    ]
+  }
+
+  statement {
+    sid = "ManageFrontendBucketObjects"
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.project_name}-*/*",
+    ]
+  }
+
+  statement {
+    sid = "ManageFrontendIam"
+    actions = [
+      "iam:GetRole",
+      "iam:CreateRole",
+      "iam:DeleteRole",
+      "iam:UpdateRole",
+      "iam:TagRole",
+      "iam:UntagRole",
+      "iam:PassRole",
+      "iam:AttachRolePolicy",
+      "iam:DetachRolePolicy",
+      "iam:PutRolePolicy",
+      "iam:DeleteRolePolicy",
+      "iam:GetRolePolicy",
+      "iam:ListAttachedRolePolicies",
+      "iam:ListRolePolicies",
+      "iam:CreatePolicy",
+      "iam:DeletePolicy",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:CreatePolicyVersion",
+      "iam:DeletePolicyVersion",
+      "iam:ListPolicyVersions",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.project_name}-*",
+    ]
+  }
+
+  statement {
+    sid       = "ReadCallerIdentity"
+    actions   = ["sts:GetCallerIdentity"]
+    resources = ["*"]
+  }
 }
 
-resource "aws_iam_policy" "terraform_state" {
-  name        = "${var.project_name}-terraform-state-access"
-  description = "Acceso al bucket S3 de state y DynamoDB lock"
-  policy      = data.aws_iam_policy_document.terraform_state.json
+resource "aws_iam_policy" "terraform_github" {
+  name        = "${var.project_name}-terraform-github-access"
+  description = "Acceso del pipeline Terraform al state y a los recursos AWS administrados por este repo"
+  policy      = data.aws_iam_policy_document.terraform_github.json
 }
 
-resource "aws_iam_role_policy_attachment" "terraform_state" {
+resource "aws_iam_role_policy_attachment" "terraform_github" {
   role       = aws_iam_role.terraform_github.name
-  policy_arn = aws_iam_policy.terraform_state.arn
-}
-
-# PowerUserAccess para dev — restringe en prod adjuntando una policy acotada en su lugar
-resource "aws_iam_role_policy_attachment" "power_user" {
-  role       = aws_iam_role.terraform_github.name
-  policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
+  policy_arn = aws_iam_policy.terraform_github.arn
 }
 
 # ── Outputs ───────────────────────────────────────────────────────────────────
