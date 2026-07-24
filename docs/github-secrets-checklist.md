@@ -19,8 +19,9 @@ Marca cada ítem cuando esté configurado en **Settings → Secrets and variable
 | `AWS_REGION` | `us-east-1` | Región por defecto |
 | `TF_REMOTE_STATE_ENABLED` | `true` | Activa plan con backend S3 en CI |
 | `INFRACOST_ENABLED` | `true` | Activa el job de estimación de costes Infracost en PRs |
-| `TF_STATE_BUCKET` | `aditsystem-tf-state-...` | Referencia documental (opcional) |
+| `TF_STATE_BUCKET` | `aditsystem-tf-state-...` | Bucket real del remote state |
 | `TF_STATE_LOCK_TABLE` | `aditsystem-tf-locks` | Requerida por CI/CD remoto |
+| `TF_BACKEND_REGION` | `us-east-1` | Región del bucket/tabla de state; usarla si difiere de `AWS_REGION` |
 
 ## Variables por environment (opcional)
 

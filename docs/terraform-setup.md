@@ -97,6 +97,7 @@ Cuando estén configurados, activa en el repo:
 | `TF_REMOTE_STATE_ENABLED` | `true` |
 | `TF_STATE_BUCKET` | output `state_bucket` del bootstrap |
 | `TF_STATE_LOCK_TABLE` | output `dynamodb_table` del bootstrap |
+| `TF_BACKEND_REGION` | región real del bucket de state, por ejemplo `us-east-1` |
 
 Esto habilita el job `plan-remote` en el workflow de CI.
 

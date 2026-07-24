@@ -32,19 +32,19 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.7.0
+          terraform_version: 1.12.2
           terraform_wrapper: false
       - name: terraform apply
         env:
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
           TF_STATE_LOCK_TABLE: ${{ vars.TF_STATE_LOCK_TABLE }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          TF_BACKEND_REGION: ${{ vars.TF_BACKEND_REGION || vars.AWS_REGION }}
         working-directory: environments/${{ inputs.environment }}
         run: |
           terraform init -input=false \
             -backend-config="bucket=${TF_STATE_BUCKET}" \
             -backend-config="key=${{ inputs.environment }}/terraform.tfstate" \
-            -backend-config="region=${AWS_REGION}" \
+            -backend-config="region=${TF_BACKEND_REGION}" \
             -backend-config="dynamodb_table=${TF_STATE_LOCK_TABLE}" \
             -backend-config="encrypt=true"
           terraform plan -input=false -out=tfplan
