@@ -17,7 +17,7 @@ provider "aws" {
 
 variable "aws_region" {
   type    = string
-  default = "us-east-1"
+  default = "mx-central-1"
 }
 
 module "frontend_deploy_target" {
