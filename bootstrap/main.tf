@@ -342,6 +342,28 @@ data "aws_iam_policy_document" "terraform_github" {
   }
 
   statement {
+    sid = "ManageDevelopmentKmsKeys"
+    actions = [
+      "kms:CreateAlias",
+      "kms:CreateGrant",
+      "kms:CreateKey",
+      "kms:DeleteAlias",
+      "kms:DescribeKey",
+      "kms:EnableKeyRotation",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:ListAliases",
+      "kms:ListResourceTags",
+      "kms:PutKeyPolicy",
+      "kms:ScheduleKeyDeletion",
+      "kms:TagResource",
+      "kms:UntagResource",
+      "kms:UpdateKeyDescription",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
     sid       = "AttachSsmManagedPolicy"
     actions   = ["iam:AttachRolePolicy", "iam:DetachRolePolicy"]
     resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-*"]

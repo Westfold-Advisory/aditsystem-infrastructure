@@ -13,7 +13,7 @@ flowchart LR
   Internet -->|API :8000, temporary dev exposure| EC2
 ```
 
-RDS es Single-AZ, cifrado, sin acceso público y se distribuye en dos subredes privadas. El motor es PostgreSQL 16, compatible con el uso de PostGIS del backend. Tras crear la base, las migraciones deben habilitar `postgis` con el usuario administrador antes de aplicar el esquema que usa tipos geoespaciales.
+RDS es Single-AZ, cifrado con una CMK dedicada administrada por Terraform, sin acceso público y se distribuye en dos subredes privadas. El motor es PostgreSQL 16, compatible con el uso de PostGIS del backend. Tras crear la base, las migraciones deben habilitar `postgis` con el usuario administrador antes de aplicar el esquema que usa tipos geoespaciales.
 
 No se crea NAT Gateway para desarrollo. La instancia está en una subred pública exclusivamente para obtener actualizaciones, ECR, SSM, Secrets Manager y CloudWatch a través del Internet Gateway; su grupo de seguridad no expone SSH y exige IMDSv2. RDS y S3 de medios no son públicos. El puerto 8000 queda expuesto temporalmente para el flujo público; antes de producción debe sustituirse por ALB/HTTPS y limitarse el origen.
 

@@ -100,6 +100,18 @@ resource "aws_db_subnet_group" "this" {
   subnet_ids = aws_subnet.private_db[*].id
 }
 
+resource "aws_kms_key" "rds" {
+  description             = "RDS storage encryption for ${local.name_prefix}"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+  tags                    = { Name = "${local.name_prefix}-rds" }
+}
+
+resource "aws_kms_alias" "rds" {
+  name          = "alias/${local.name_prefix}-rds"
+  target_key_id = aws_kms_key.rds.key_id
+}
+
 resource "aws_db_instance" "postgres" {
   identifier                      = "${local.name_prefix}-postgres"
   engine                          = "postgres"
@@ -109,6 +121,7 @@ resource "aws_db_instance" "postgres" {
   max_allocated_storage           = 25
   storage_type                    = "gp3"
   storage_encrypted               = true
+  kms_key_id                      = aws_kms_key.rds.arn
   db_name                         = var.db_name
   username                        = var.db_username
   manage_master_user_password     = true
