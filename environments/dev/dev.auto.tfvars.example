@@ -1,0 +1,18 @@
+# Copiar como dev.auto.tfvars para aplicar localmente:
+#   cp dev.auto.tfvars.example dev.auto.tfvars
+# El archivo real está ignorado por Git. No agregues secretos aquí.
+
+aws_region = "mx-central-1"
+
+# RDS necesita dos subredes en zonas distintas, incluso en Single-AZ.
+availability_zones = [
+  "mx-central-1a",
+  "mx-central-1b",
+]
+
+# Componentes opcionales: se mantienen apagados para el MVP de desarrollo.
+enable_alb        = false
+enable_cloudfront = false
+enable_waf        = false
+enable_custom_dns = false
+enable_multi_az   = false
