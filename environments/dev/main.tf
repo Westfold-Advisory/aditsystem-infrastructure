@@ -91,6 +91,7 @@ output "database_master_secret_arn" {
   sensitive = true
   value     = module.dev_minimum_stack.database_master_secret_arn
 }
+output "database_kms_key_arn" { value = module.dev_minimum_stack.database_kms_key_arn }
 output "media_bucket_name" { value = module.dev_minimum_stack.media_bucket_name }
 output "backend_instance_id" { value = module.dev_minimum_stack.backend_instance_id }
 output "backend_public_ip" { value = module.dev_minimum_stack.backend_public_ip }
