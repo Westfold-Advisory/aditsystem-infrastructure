@@ -39,9 +39,17 @@ Prueba local:
 
 ```bash
 cd environments/dev
+cp dev.auto.tfvars.example dev.auto.tfvars
 terraform init -backend-config=../../config/backend-dev.hcl
 terraform plan
+terraform apply
 ```
+
+`dev.auto.tfvars` queda ignorado por Git y contiene sólo parámetros públicos
+del entorno (región, AZs y flags). No coloques secretos allí: la contraseña de
+RDS es gestionada por Secrets Manager y las claves JWT se cargan en el secret
+runtime después del apply. La plantilla equivalente para el bootstrap ya está
+en `bootstrap/terraform.tfvars.example`.
 
 ## 3. OIDC — GitHub Actions → AWS (recomendado)
 
