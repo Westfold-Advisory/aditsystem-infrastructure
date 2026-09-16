@@ -5,6 +5,19 @@ Guía para bootstrap del **remote state** (S3 + DynamoDB), **OIDC con GitHub Act
 ## 1. Bootstrap del backend (S3 + DynamoDB)
 
 Requiere credenciales AWS con permisos para crear bucket S3 y tabla DynamoDB.
+Primero confirma que la identidad local sea válida y corresponda a la cuenta
+destino:
+
+```bash
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+aws sso login --profile aditsystem-admin
+export AWS_PROFILE=aditsystem-admin
+aws sts get-caller-identity
+```
+
+Si no se usa SSO, configura un perfil válido con `aws configure --profile
+aditsystem-admin`. Un `InvalidClientTokenId` significa que las credenciales
+locales son inválidas o expiraron; no es un error de Terraform.
 
 ```bash
 cd bootstrap

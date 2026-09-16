@@ -14,6 +14,27 @@ Crea de una sola vez todo lo necesario para que el pipeline de CI/CD funcione:
 - AWS CLI configurado con credenciales de administrador (`aws sts get-caller-identity`)
 - Terraform >= 1.5.0 instalado localmente
 
+### Preflight de credenciales locales
+
+Antes de copiar variables o inicializar Terraform, valida la identidad AWS. El
+bootstrap necesita una identidad administrativa de la cuenta destino, no el
+rol OIDC de GitHub Actions:
+
+```bash
+# Si hay credenciales temporales expiradas en la terminal, elimínalas primero.
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+
+# Para un perfil SSO, renueva la sesión y selecciónalo.
+aws sso login --profile aditsystem-admin
+export AWS_PROFILE=aditsystem-admin
+
+aws sts get-caller-identity
+```
+
+El último comando debe mostrar la cuenta AWS esperada. Si responde
+`InvalidClientTokenId`, no continúes con Terraform: renueva la sesión SSO o
+configura un perfil válido con `aws configure --profile aditsystem-admin`.
+
 ## Pasos
 
 ```bash
