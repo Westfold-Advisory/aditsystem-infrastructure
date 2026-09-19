@@ -276,7 +276,9 @@ resource "aws_instance" "backend" {
   vpc_security_group_ids      = [aws_security_group.backend.id]
   iam_instance_profile        = aws_iam_instance_profile.backend.name
   associate_public_ip_address = true
-  monitoring                  = true
+  # Detailed EC2 monitoring is not needed for the development MVP; the
+  # application still writes its logs to the dedicated CloudWatch log group.
+  monitoring                  = false
   user_data_replace_on_change = true
   user_data                   = <<-USERDATA
     #!/bin/bash
