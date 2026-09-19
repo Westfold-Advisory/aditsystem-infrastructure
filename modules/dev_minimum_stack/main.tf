@@ -226,6 +226,19 @@ data "aws_iam_policy_document" "backend_github" {
     actions   = ["ecr:BatchCheckLayerAvailability", "ecr:CompleteLayerUpload", "ecr:InitiateLayerUpload", "ecr:PutImage", "ecr:UploadLayerPart"]
     resources = [aws_ecr_repository.backend.arn]
   }
+  statement {
+    sid     = "DeployOnlyToBackendInstance"
+    actions = ["ssm:SendCommand"]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/${aws_instance.backend.id}",
+      "arn:aws:ssm:${var.aws_region}::document/AWS-RunShellScript",
+    ]
+  }
+  statement {
+    sid       = "ReadOwnDeploymentCommand"
+    actions   = ["ssm:GetCommandInvocation"]
+    resources = ["*"]
+  }
 }
 resource "aws_iam_role_policy" "backend_github" {
   name   = "ecr-push"
@@ -283,8 +296,8 @@ resource "aws_instance" "backend" {
   user_data                   = <<-USERDATA
     #!/bin/bash
     set -euxo pipefail
-    dnf install -y docker
-    systemctl enable --now docker
+    dnf install -y docker amazon-ssm-agent
+    systemctl enable --now docker amazon-ssm-agent
     usermod -aG docker ssm-user || true
   USERDATA
   metadata_options {
