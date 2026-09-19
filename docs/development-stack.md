@@ -26,6 +26,9 @@ Después de `terraform apply`, tomar estos outputs de `environments/dev` y defin
 | `AWS_REGION` | `backend_github_variables.AWS_REGION` |
 | `AWS_ECR_REPOSITORY` | `backend_ecr_repository` |
 | `AWS_DEPLOY_ROLE_ARN` | `backend_github_deploy_role_arn` |
+| `AWS_EC2_INSTANCE_ID` | `backend_instance_id` |
+| `AWS_RUNTIME_SECRET_ARN` | `backend_runtime_secret_arn` |
+| `AWS_DB_SECRET_ARN` | `database_master_secret_arn` |
 
 El trust policy exige exactamente `repo:Westfold-Advisory/aditsystem-backend:environment:development`. El rol sólo puede obtener un token ECR y subir capas/manifiestos al repositorio creado; no puede administrar EC2, secretos ni otros repositorios. No se usan access keys persistentes.
 
@@ -33,6 +36,6 @@ El trust policy exige exactamente `repo:Westfold-Advisory/aditsystem-backend:env
 
 RDS administra la contraseña maestra en Secrets Manager mediante `manage_master_user_password`; su ARN se entrega como output sensible. El secret `${project}-${environment}/backend-runtime` se crea vacío para que las claves JWT y la lista CORS se carguen fuera de Git y del estado Terraform. Nunca registrar su contenido en logs ni variables públicas del frontend.
 
-La EC2 incluye Docker y un instance profile con SSM, lectura del secret runtime y de la contraseña RDS, lectura del ECR propio y escritura únicamente al log group del backend. El despliegue del contenedor y las migraciones se ejecutarán por SSM usando una etiqueta inmutable publicada por el pipeline backend; no se requiere ni se habilita SSH.
+La EC2 incluye Docker y un instance profile con SSM, lectura del secret runtime y de la contraseña RDS, lectura del ECR propio y escritura únicamente al log group del backend. El rol OIDC del backend puede publicar únicamente en ECR y ejecutar `AWS-RunShellScript` exclusivamente en esta EC2; no puede administrar EC2 ni leer secretos. El despliegue del contenedor y las migraciones se ejecutarán por SSM usando una etiqueta inmutable publicada por el pipeline backend; no se requiere ni se habilita SSH.
 
 Las opciones `enable_alb`, `enable_cloudfront`, `enable_waf`, `enable_custom_dns` y `enable_multi_az` existen con valor `false` por defecto. No crean recursos adicionales hasta que se diseñen esos componentes.
