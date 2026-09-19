@@ -36,3 +36,19 @@ variable "enable_cloudfront" { default = false }
 variable "enable_waf" { default = false }
 variable "enable_custom_dns" { default = false }
 variable "enable_multi_az" { default = false }
+variable "route53_zone_name" {
+  type    = string
+  default = "aditsystem-dev.ervic.pro"
+}
+variable "frontend_domain_name" {
+  type    = string
+  default = "aditsystem-dev.ervic.pro"
+}
+variable "api_domain_name" {
+  type    = string
+  default = "api.aditsystem-dev.ervic.pro"
+}
+variable "frontend_website_endpoint" {
+  type    = string
+  default = ""
+}
