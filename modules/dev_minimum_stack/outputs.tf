@@ -8,5 +8,7 @@ output "database_master_secret_arn" {
   sensitive = true
   value     = aws_db_instance.postgres.master_user_secret[0].secret_arn
 }
+output "database_endpoint" { value = aws_db_instance.postgres.address }
+output "database_port" { value = aws_db_instance.postgres.port }
 output "database_kms_key_arn" { value = aws_kms_key.rds.arn }
 output "media_bucket_name" { value = aws_s3_bucket.media.bucket }
