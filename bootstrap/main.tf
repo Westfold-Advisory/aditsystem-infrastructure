@@ -241,6 +241,7 @@ data "aws_iam_policy_document" "terraform_github" {
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeSubnets",
       "ec2:DescribeTags",
+      "ec2:DescribeVpcAttribute",
       "ec2:DescribeVolumes",
       "ec2:DescribeVpcs",
     ]
@@ -333,6 +334,7 @@ data "aws_iam_policy_document" "terraform_github" {
       "secretsmanager:CreateSecret",
       "secretsmanager:DeleteSecret",
       "secretsmanager:DescribeSecret",
+      "secretsmanager:GetResourcePolicy",
       "secretsmanager:ListSecretVersionIds",
       "secretsmanager:ListSecrets",
       "secretsmanager:TagResource",
