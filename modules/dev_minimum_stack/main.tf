@@ -510,7 +510,7 @@ resource "aws_instance" "backend" {
   user_data                   = <<-USERDATA
     #!/bin/bash
     set -euxo pipefail
-    dnf install -y docker amazon-ssm-agent
+    dnf install -y docker amazon-ssm-agent python3
     systemctl enable --now docker amazon-ssm-agent
     usermod -aG docker ssm-user || true
   USERDATA
