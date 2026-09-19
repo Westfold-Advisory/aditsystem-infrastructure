@@ -37,7 +37,7 @@ variable "enable_custom_dns" { default = true }
 variable "enable_multi_az" { default = false }
 variable "route53_zone_name" {
   type    = string
-  default = "ervic.pro"
+  default = "aditsystem-dev.ervic.pro"
 }
 variable "frontend_domain_name" {
   type    = string
