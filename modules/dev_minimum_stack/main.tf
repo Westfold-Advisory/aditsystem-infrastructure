@@ -531,9 +531,14 @@ resource "aws_instance" "backend" {
   user_data                   = <<-USERDATA
     #!/bin/bash
     set -euxo pipefail
-    dnf install -y docker amazon-ssm-agent python3 awscli2
-    systemctl enable --now docker amazon-ssm-agent
+    # Retry dnf up to 3 times to tolerate transient network issues at first boot.
+    for attempt in 1 2 3; do
+      dnf install -y docker python3 awscli2 && break
+      [ "$attempt" -lt 3 ] && sleep 15
+    done
+    systemctl enable --now docker
     usermod -aG docker ssm-user || true
+    docker info >/dev/null
   USERDATA
   metadata_options {
     http_endpoint = "enabled"
