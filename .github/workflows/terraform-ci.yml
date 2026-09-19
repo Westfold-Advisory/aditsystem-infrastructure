@@ -198,9 +198,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::810626480386:role/aditsystem-terraform-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - uses: hashicorp/setup-terraform@v3
         with:

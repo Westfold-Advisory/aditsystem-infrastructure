@@ -8,7 +8,6 @@ Marca cada ítem cuando esté configurado en **Settings → Secrets and variable
 
 | Secret | ¿Requerido? | Descripción |
 |--------|-------------|-------------|
-| `AWS_ROLE_ARN` | Sí (para plan/apply con AWS) | ARN del rol IAM con trust OIDC hacia este repo |
 | `INFRACOST_API_KEY` | Sí (para estimación de costes) | API key gratuita en [infracost.io/docs/](https://infracost.io/docs/) |
 | `TF_VAR_db_password` | No (evitar si es posible) | Solo si no usas Secrets Manager; preferir SSM/Secrets Manager |
 
@@ -24,14 +23,9 @@ Marca cada ítem cuando esté configurado en **Settings → Secrets and variable
 
 `TF_STATE_LOCK_TABLE` queda solo para setups legacy; el workflow actual usa `use_lockfile=true` en S3 y ya no requiere DynamoDB para locking.
 
-## Variables por environment (opcional)
-
-Repite `AWS_ROLE_ARN` por environment si usas roles distintos:
-
-| Environment | Rol sugerido |
-|-------------|--------------|
-| `development` | Rol con permisos amplios en cuenta dev |
-| `production` | Rol mínimo + aprobación manual |
+El ARN del rol Terraform OIDC no se almacena como secret: el workflow lo
+declara explícitamente porque un ARN no es una credencial. Las credenciales son
+temporales y las emite AWS STS mediante OIDC.
 
 ## Environments a crear
 

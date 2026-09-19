@@ -26,9 +26,11 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          # ARN is an identifier, not a credential. Keeping it here prevents
+          # an empty environment secret from silently disabling OIDC.
+          role-to-assume: arn:aws:iam::810626480386:role/aditsystem-terraform-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - uses: hashicorp/setup-terraform@v3
         with:
