@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source                = "hashicorp/aws"
+      configuration_aliases = [aws.us_east_1]
+    }
+  }
+}
+
 data "aws_caller_identity" "current" {}
 
 data "aws_ami" "amazon_linux_2023" {
@@ -63,23 +72,228 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+resource "aws_subnet" "public_alb" {
+  count                   = var.enable_alb ? 1 : 0
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = "10.40.1.0/24"
+  availability_zone       = var.availability_zones[1]
+  map_public_ip_on_launch = true
+  tags                    = { Name = "${local.name_prefix}-public-alb" }
+}
+resource "aws_route_table_association" "public_alb" {
+  count          = var.enable_alb ? 1 : 0
+  subnet_id      = aws_subnet.public_alb[0].id
+  route_table_id = aws_route_table.public.id
+}
+
 resource "aws_security_group" "backend" {
   name_prefix = "${local.name_prefix}-backend-"
   description = "Public API only; SSH is deliberately absent."
   vpc_id      = aws_vpc.this.id
 
-  ingress {
-    description = "FastAPI development endpoint"
-    from_port   = var.backend_port
-    to_port     = var.backend_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
   egress {
     protocol    = "-1"
     from_port   = 0
     to_port     = 0
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group_rule" "backend_direct" {
+  count             = var.enable_alb ? 0 : 1
+  type              = "ingress"
+  from_port         = var.backend_port
+  to_port           = var.backend_port
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.backend.id
+}
+resource "aws_security_group" "alb" {
+  count       = var.enable_alb ? 1 : 0
+  name_prefix = "${local.name_prefix}-alb-"
+  vpc_id      = aws_vpc.this.id
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port       = var.backend_port
+    to_port         = var.backend_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.backend.id]
+  }
+}
+resource "aws_security_group_rule" "backend_alb" {
+  count                    = var.enable_alb ? 1 : 0
+  type                     = "ingress"
+  from_port                = var.backend_port
+  to_port                  = var.backend_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.alb[0].id
+  security_group_id        = aws_security_group.backend.id
+}
+
+data "aws_route53_zone" "public" {
+  count        = var.enable_custom_dns ? 1 : 0
+  name         = "${var.route53_zone_name}."
+  private_zone = false
+}
+resource "aws_acm_certificate" "api" {
+  count             = var.enable_alb && var.enable_custom_dns ? 1 : 0
+  domain_name       = var.api_domain_name
+  validation_method = "DNS"
+}
+resource "aws_route53_record" "api_certificate" {
+  for_each = var.enable_alb && var.enable_custom_dns ? { for dvo in aws_acm_certificate.api[0].domain_validation_options : dvo.domain_name => dvo } : {}
+  zone_id  = data.aws_route53_zone.public[0].zone_id
+  name     = each.value.resource_record_name
+  type     = each.value.resource_record_type
+  records  = [each.value.resource_record_value]
+  ttl      = 60
+}
+resource "aws_acm_certificate_validation" "api" {
+  count                   = var.enable_alb && var.enable_custom_dns ? 1 : 0
+  certificate_arn         = aws_acm_certificate.api[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.api_certificate : record.fqdn]
+}
+resource "aws_lb" "api" {
+  count              = var.enable_alb ? 1 : 0
+  name               = "${local.name_prefix}-api"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb[0].id]
+  subnets            = [aws_subnet.public.id, aws_subnet.public_alb[0].id]
+}
+resource "aws_lb_target_group" "api" {
+  count    = var.enable_alb ? 1 : 0
+  name     = "${local.name_prefix}-api"
+  port     = var.backend_port
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.this.id
+  health_check {
+    path    = "/health"
+    matcher = "200"
+  }
+}
+resource "aws_lb_target_group_attachment" "api" {
+  count            = var.enable_alb ? 1 : 0
+  target_group_arn = aws_lb_target_group.api[0].arn
+  target_id        = aws_instance.backend.id
+  port             = var.backend_port
+}
+resource "aws_lb_listener" "api_https" {
+  count             = var.enable_alb && var.enable_custom_dns ? 1 : 0
+  load_balancer_arn = aws_lb.api[0].arn
+  port              = 443
+  protocol          = "HTTPS"
+  certificate_arn   = aws_acm_certificate_validation.api[0].certificate_arn
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.api[0].arn
+  }
+}
+resource "aws_lb_listener" "api_http" {
+  count             = var.enable_alb && var.enable_custom_dns ? 1 : 0
+  load_balancer_arn = aws_lb.api[0].arn
+  port              = 80
+  protocol          = "HTTP"
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+resource "aws_route53_record" "api" {
+  count   = var.enable_alb && var.enable_custom_dns ? 1 : 0
+  zone_id = data.aws_route53_zone.public[0].zone_id
+  name    = var.api_domain_name
+  type    = "A"
+  alias {
+    name                   = aws_lb.api[0].dns_name
+    zone_id                = aws_lb.api[0].zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_acm_certificate" "frontend" {
+  provider          = aws.us_east_1
+  count             = var.enable_cloudfront && var.enable_custom_dns ? 1 : 0
+  domain_name       = var.frontend_domain_name
+  validation_method = "DNS"
+}
+resource "aws_route53_record" "frontend_certificate" {
+  for_each = var.enable_cloudfront && var.enable_custom_dns ? { for dvo in aws_acm_certificate.frontend[0].domain_validation_options : dvo.domain_name => dvo } : {}
+  zone_id  = data.aws_route53_zone.public[0].zone_id
+  name     = each.value.resource_record_name
+  type     = each.value.resource_record_type
+  records  = [each.value.resource_record_value]
+  ttl      = 60
+}
+resource "aws_acm_certificate_validation" "frontend" {
+  provider                = aws.us_east_1
+  count                   = var.enable_cloudfront && var.enable_custom_dns ? 1 : 0
+  certificate_arn         = aws_acm_certificate.frontend[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.frontend_certificate : record.fqdn]
+}
+resource "aws_cloudfront_distribution" "frontend" {
+  count               = var.enable_cloudfront && var.enable_custom_dns ? 1 : 0
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+  aliases             = [var.frontend_domain_name]
+  origin {
+    domain_name = var.frontend_website_endpoint
+    origin_id   = "s3-website"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+  default_cache_behavior {
+    target_origin_id       = "s3-website"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.frontend[0].certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+}
+resource "aws_route53_record" "frontend" {
+  count   = var.enable_cloudfront && var.enable_custom_dns ? 1 : 0
+  zone_id = data.aws_route53_zone.public[0].zone_id
+  name    = var.frontend_domain_name
+  type    = "A"
+  alias {
+    name                   = aws_cloudfront_distribution.frontend[0].domain_name
+    zone_id                = aws_cloudfront_distribution.frontend[0].hosted_zone_id
+    evaluate_target_health = false
   }
 }
 
