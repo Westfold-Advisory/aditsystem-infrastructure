@@ -442,6 +442,7 @@ data "aws_iam_policy_document" "terraform_github_custom_domains" {
       "route53:ListResourceRecordSets",
       "route53:ListTagsForResource",
       "route53:GetChange",
+      "route53:ListTagsForResource"
     ]
     resources = ["*"]
   }
