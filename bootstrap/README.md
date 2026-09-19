@@ -71,15 +71,7 @@ terraform output -raw backend_config_dev  > ../config/backend-dev.hcl
 terraform output -raw backend_config_prod > ../config/backend-prod.hcl
 ```
 
-### 2. Configurar el secret en GitHub
-
-En **Settings → Secrets and variables → Actions → Secrets**:
-
-| Secret | Valor |
-|--------|-------|
-| `AWS_ROLE_ARN` | Valor del output `github_actions_role_arn` |
-
-### 3. Configurar las variables en GitHub
+### 2. Configurar las variables en GitHub
 
 En **Settings → Secrets and variables → Actions → Variables**:
 
@@ -89,7 +81,11 @@ En **Settings → Secrets and variables → Actions → Variables**:
 | `TF_REMOTE_STATE_ENABLED` | `true` (activa el job `plan-remote` en CI) |
 | `TF_BACKEND_REGION` | Región real del bucket de state (ej. `us-east-1`) |
 
-### 4. Crear los GitHub Environments
+El workflow de infraestructura declara el ARN del rol OIDC creado por el
+bootstrap. No se necesita guardar ese ARN como secret; no contiene una
+credencial. El output `github_actions_role_arn` sirve para auditar el valor.
+
+### 3. Crear los GitHub Environments
 
 En **Settings → Environments**:
 - `development` — sin restrictions
