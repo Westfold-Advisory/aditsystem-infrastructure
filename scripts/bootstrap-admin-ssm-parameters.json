@@ -1,0 +1,28 @@
+{
+  "commands": [
+    "set -euo pipefail",
+    "set +x",
+    "umask 077",
+    "app_dir=/opt/aditsystem",
+    "secret_id=aditsystem-dev/bootstrap-admin",
+    "bootstrap_file=$(mktemp)",
+    "trap 'rm -f \"$bootstrap_file\"' EXIT",
+    "if ! aws secretsmanager get-secret-value --region mx-central-1 --secret-id \"$secret_id\" --query SecretString --output text >\"$bootstrap_file\" 2>/dev/null; then",
+    "  python3 - \"$bootstrap_file\" <<'PY'",
+    "import json",
+    "import secrets",
+    "import sys",
+    "payload = {\"email\": \"eperez@ervic.pro\", \"full_name\": \"Administrador\", \"password\": secrets.token_urlsafe(32), \"role\": \"ADMIN\"}",
+    "with open(sys.argv[1], \"w\", encoding=\"utf-8\") as target:",
+    "    json.dump(payload, target)",
+    "PY",
+    "  aws secretsmanager put-secret-value --region mx-central-1 --secret-id \"$secret_id\" --secret-string file://\"$bootstrap_file\" >/dev/null",
+    "fi",
+    "export BOOTSTRAP_EMAIL=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))[\"email\"])' \"$bootstrap_file\")",
+    "export BOOTSTRAP_NAME=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))[\"full_name\"])' \"$bootstrap_file\")",
+    "export BOOTSTRAP_PASSWORD=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))[\"password\"])' \"$bootstrap_file\")",
+    "image_uri=$(docker inspect aditsystem-backend --format '{{.Config.Image}}')",
+    "docker run --rm --env-file \"$app_dir/runtime.env\" -e BOOTSTRAP_EMAIL -e BOOTSTRAP_NAME -e BOOTSTRAP_PASSWORD -v \"$app_dir/keys:/run/aditsystem/keys:ro\" \"$image_uri\" python scripts/create_superuser.py",
+    "unset BOOTSTRAP_EMAIL BOOTSTRAP_NAME BOOTSTRAP_PASSWORD"
+  ]
+}

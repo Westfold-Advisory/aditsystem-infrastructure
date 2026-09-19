@@ -399,6 +399,19 @@ resource "aws_secretsmanager_secret" "backend_runtime" {
   recovery_window_in_days = 7
 }
 
+# This resource deliberately has no aws_secretsmanager_secret_version. The
+# one-time password is generated on the backend instance during the SSM
+# bootstrap operation, so Terraform never receives, stores, or displays it.
+resource "aws_secretsmanager_secret" "bootstrap_admin" {
+  name                    = "${local.name_prefix}/bootstrap-admin"
+  description             = "One-time development ADMIN bootstrap credential. Value is created only by the backend instance through SSM."
+  recovery_window_in_days = 7
+
+  tags = {
+    Purpose = "bootstrap-admin"
+  }
+}
+
 resource "aws_cloudwatch_log_group" "backend" {
   name              = "/${var.project_name}/${var.environment}/backend"
   retention_in_days = 7
@@ -478,8 +491,16 @@ data "aws_iam_policy_document" "backend_instance" {
     actions   = ["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"]
   }
   statement {
-    resources = [aws_secretsmanager_secret.backend_runtime.arn, aws_db_instance.postgres.master_user_secret[0].secret_arn]
-    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.backend_runtime.arn,
+      aws_secretsmanager_secret.bootstrap_admin.arn,
+      aws_db_instance.postgres.master_user_secret[0].secret_arn,
+    ]
+    actions = ["secretsmanager:GetSecretValue"]
+  }
+  statement {
+    resources = [aws_secretsmanager_secret.bootstrap_admin.arn]
+    actions   = ["secretsmanager:PutSecretValue"]
   }
   statement {
     resources = ["${aws_cloudwatch_log_group.backend.arn}:*"]
@@ -510,7 +531,7 @@ resource "aws_instance" "backend" {
   user_data                   = <<-USERDATA
     #!/bin/bash
     set -euxo pipefail
-    dnf install -y docker amazon-ssm-agent python3
+    dnf install -y docker amazon-ssm-agent python3 awscli2
     systemctl enable --now docker amazon-ssm-agent
     usermod -aG docker ssm-user || true
   USERDATA

@@ -77,6 +77,10 @@ El nombre del bucket frontend incluye la región AWS para evitar conflictos al m
 
 El entorno `dev` también incluye ECR privado, EC2 Docker/SSM x86_64, RDS PostgreSQL privado, S3 privado para medios, Secrets Manager y CloudWatch. La composición, límites de red y configuración del pipeline backend están en [docs/development-stack.md](docs/development-stack.md).
 
+Para el primer administrador de desarrollo, Terraform sólo crea el contenedor
+de Secrets Manager y la EC2 genera su valor durante una operación SSM. El
+procedimiento y sus precondiciones están en [docs/bootstrap-admin.md](docs/bootstrap-admin.md).
+
 ### Bootstrap del remote state (una vez)
 
 ```bash
