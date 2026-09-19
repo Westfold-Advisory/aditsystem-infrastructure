@@ -203,8 +203,19 @@ data "aws_iam_policy_document" "terraform_github" {
       "kms:List*",
       "logs:Describe*",
       "logs:List*",
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
+      "acm:ListTagsForCertificate",
+      "cloudfront:GetDistribution",
+      "cloudfront:GetDistributionConfig",
+      "cloudfront:ListDistributions",
+      "cloudfront:ListTagsForResource",
+      "elasticloadbalancing:Describe*",
       "rds:Describe*",
       "rds:ListTagsForResource",
+      "route53:GetHostedZone",
+      "route53:ListHostedZones",
+      "route53:ListResourceRecordSets",
       "secretsmanager:Describe*",
       "secretsmanager:GetResourcePolicy",
       "secretsmanager:List*",
@@ -397,6 +408,42 @@ data "aws_iam_policy_document" "terraform_github" {
       "kms:TagResource",
       "kms:UntagResource",
       "kms:UpdateKeyDescription",
+    ]
+    resources = ["*"]
+  }
+
+  # Custom domains in dev use an existing public hosted zone. Route 53 does
+  # not support scoping ListHostedZones, and ACM/CloudFront/ELB create APIs
+  # require wildcard resources because their ARNs do not exist beforehand.
+  statement {
+    sid = "ManageDevelopmentCustomDomains"
+    actions = [
+      "acm:AddTagsToCertificate",
+      "acm:DeleteCertificate",
+      "acm:RemoveTagsFromCertificate",
+      "acm:RequestCertificate",
+      "cloudfront:CreateDistribution",
+      "cloudfront:DeleteDistribution",
+      "cloudfront:TagResource",
+      "cloudfront:UntagResource",
+      "cloudfront:UpdateDistribution",
+      "elasticloadbalancing:AddTags",
+      "elasticloadbalancing:CreateListener",
+      "elasticloadbalancing:CreateLoadBalancer",
+      "elasticloadbalancing:CreateTargetGroup",
+      "elasticloadbalancing:DeleteListener",
+      "elasticloadbalancing:DeleteLoadBalancer",
+      "elasticloadbalancing:DeleteTargetGroup",
+      "elasticloadbalancing:ModifyListener",
+      "elasticloadbalancing:ModifyLoadBalancerAttributes",
+      "elasticloadbalancing:ModifyTargetGroup",
+      "elasticloadbalancing:ModifyTargetGroupAttributes",
+      "elasticloadbalancing:RegisterTargets",
+      "elasticloadbalancing:DeregisterTargets",
+      "elasticloadbalancing:RemoveTags",
+      "elasticloadbalancing:SetSecurityGroups",
+      "elasticloadbalancing:SetSubnets",
+      "route53:ChangeResourceRecordSets",
     ]
     resources = ["*"]
   }

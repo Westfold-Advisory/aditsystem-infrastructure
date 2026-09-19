@@ -69,7 +69,13 @@ del proyecto. Para un primer bootstrap de esta cuenta, el valor mostrado es el
 nombre previsto. En ejecuciones posteriores vuelve a usar el mismo directorio
 y su `terraform.tfstate` local: este state es distinto del de `dev`.
 
-Si el role ya existía y el pipeline falla por permisos AWS, vuelve a ejecutar este bootstrap para que Terraform actualice la policy adjunta al role antes de relanzar `Terraform Apply`.
+Si el role ya existía y el pipeline falla por permisos AWS, actualiza el
+bootstrap desde `main` y ejecuta su `terraform apply` una vez para que
+Terraform actualice la policy adjunta al role antes de relanzar `Terraform
+Apply`. Por ejemplo, el uso de Route 53/ACM/ALB/CloudFront para dominios
+personalizados necesita esta actualización previa. El bootstrap requiere una
+identidad administrativa; no se puede reparar el permiso usando el mismo rol
+OIDC que recibió el `AccessDenied`.
 
 ## Outputs importantes
 
