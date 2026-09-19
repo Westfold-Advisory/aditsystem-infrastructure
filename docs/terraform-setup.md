@@ -116,7 +116,12 @@ El bootstrap de este repo ya puede crear un role con permisos explícitos para:
 - buckets S3 del frontend administrados por Terraform
 - roles y policies IAM `aditsystem-*` creados por los entornos
 
-Si el role ya existía y el `apply` falla por permisos como `s3:GetBucketPolicy`, vuelve a ejecutar `bootstrap/` para que Terraform actualice la policy del role antes de relanzar el workflow.
+Si el role ya existía y el `apply` falla por permisos como `s3:GetBucketPolicy`
+o `route53:ListHostedZones`, actualiza `main` y vuelve a ejecutar
+`bootstrap/` con una identidad administrativa. Esto actualiza la policy del
+rol OIDC; después relanza el workflow. No intentes corregir un `AccessDenied`
+aplicando con el mismo rol OIDC, pues precisamente es el que no tiene el
+permiso todavía.
 
 ### 3.3 Secrets y variables en GitHub
 
