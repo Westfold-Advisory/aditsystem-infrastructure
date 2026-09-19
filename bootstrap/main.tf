@@ -439,6 +439,7 @@ data "aws_iam_policy_document" "terraform_github_custom_domains" {
       "route53:GetHostedZone",
       "route53:ListHostedZones",
       "route53:ListResourceRecordSets",
+      "route53:ListTagsForResource"
     ]
     resources = ["*"]
   }
