@@ -203,19 +203,8 @@ data "aws_iam_policy_document" "terraform_github" {
       "kms:List*",
       "logs:Describe*",
       "logs:List*",
-      "acm:DescribeCertificate",
-      "acm:ListCertificates",
-      "acm:ListTagsForCertificate",
-      "cloudfront:GetDistribution",
-      "cloudfront:GetDistributionConfig",
-      "cloudfront:ListDistributions",
-      "cloudfront:ListTagsForResource",
-      "elasticloadbalancing:Describe*",
       "rds:Describe*",
       "rds:ListTagsForResource",
-      "route53:GetHostedZone",
-      "route53:ListHostedZones",
-      "route53:ListResourceRecordSets",
       "secretsmanager:Describe*",
       "secretsmanager:GetResourcePolicy",
       "secretsmanager:List*",
@@ -412,9 +401,48 @@ data "aws_iam_policy_document" "terraform_github" {
     resources = ["*"]
   }
 
-  # Custom domains in dev use an existing public hosted zone. Route 53 does
-  # not support scoping ListHostedZones, and ACM/CloudFront/ELB create APIs
-  # require wildcard resources because their ARNs do not exist beforehand.
+  statement {
+    sid       = "AttachSsmManagedPolicy"
+    actions   = ["iam:AttachRolePolicy", "iam:DetachRolePolicy"]
+    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-*"]
+    condition {
+      test     = "ArnEquals"
+      variable = "iam:PolicyARN"
+      values   = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"]
+    }
+  }
+
+  statement {
+    sid       = "ReadCallerIdentity"
+    actions   = ["sts:GetCallerIdentity"]
+    resources = ["*"]
+  }
+}
+
+# Custom-domain permissions are intentionally a separate managed policy. IAM
+# limits each managed-policy document to 6,144 characters; keeping this set
+# separate lets the base Terraform policy evolve without hitting that limit.
+data "aws_iam_policy_document" "terraform_github_custom_domains" {
+  # Route 53 list APIs and creation APIs for ACM, ALB and CloudFront cannot be
+  # restricted to ARNs that Terraform has not created yet.
+  statement {
+    sid = "ReadCustomDomainResources"
+    actions = [
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
+      "acm:ListTagsForCertificate",
+      "cloudfront:GetDistribution",
+      "cloudfront:GetDistributionConfig",
+      "cloudfront:ListDistributions",
+      "cloudfront:ListTagsForResource",
+      "elasticloadbalancing:Describe*",
+      "route53:GetHostedZone",
+      "route53:ListHostedZones",
+      "route53:ListResourceRecordSets",
+    ]
+    resources = ["*"]
+  }
+
   statement {
     sid = "ManageDevelopmentCustomDomains"
     actions = [
@@ -447,23 +475,6 @@ data "aws_iam_policy_document" "terraform_github" {
     ]
     resources = ["*"]
   }
-
-  statement {
-    sid       = "AttachSsmManagedPolicy"
-    actions   = ["iam:AttachRolePolicy", "iam:DetachRolePolicy"]
-    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-*"]
-    condition {
-      test     = "ArnEquals"
-      variable = "iam:PolicyARN"
-      values   = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"]
-    }
-  }
-
-  statement {
-    sid       = "ReadCallerIdentity"
-    actions   = ["sts:GetCallerIdentity"]
-    resources = ["*"]
-  }
 }
 
 resource "aws_iam_policy" "terraform_github" {
@@ -472,9 +483,20 @@ resource "aws_iam_policy" "terraform_github" {
   policy      = data.aws_iam_policy_document.terraform_github.json
 }
 
+resource "aws_iam_policy" "terraform_github_custom_domains" {
+  name        = "${var.project_name}-terraform-github-custom-domains"
+  description = "Acceso del pipeline Terraform a dominios personalizados de desarrollo"
+  policy      = data.aws_iam_policy_document.terraform_github_custom_domains.json
+}
+
 resource "aws_iam_role_policy_attachment" "terraform_github" {
   role       = aws_iam_role.terraform_github.name
   policy_arn = aws_iam_policy.terraform_github.arn
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_github_custom_domains" {
+  role       = aws_iam_role.terraform_github.name
+  policy_arn = aws_iam_policy.terraform_github_custom_domains.arn
 }
 
 # ── Outputs ───────────────────────────────────────────────────────────────────

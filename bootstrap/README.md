@@ -42,6 +42,10 @@ y crea el bucket S3 que será el backend remoto de `environments/dev` y
 `environments/prod`. Su estado queda inicialmente en
 `bootstrap/terraform.tfstate`; consérvalo y no lo subas a Git.
 
+El rol OIDC recibe políticas administradas separadas para la infraestructura
+base y para dominios personalizados. Esta separación evita el límite de 6,144
+caracteres que IAM aplica a cada documento de policy administrada.
+
 Para la cuenta `810626480386`, la plantilla contiene los valores correctos:
 
 ```bash
