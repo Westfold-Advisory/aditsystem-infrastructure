@@ -15,6 +15,15 @@ permissions:
   id-token: write
   contents: read
 
+# Never cancel an in-flight apply: serialize it per target environment instead.
+concurrency:
+  group: terraform-apply-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  TERRAFORM_VERSION: 1.12.2
+  TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+
 jobs:
   apply:
     name: Apply (${{ inputs.environment }})
@@ -34,8 +43,15 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.12.2
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ runner.os }}-${{ env.TERRAFORM_VERSION }}-${{ inputs.environment }}-${{ hashFiles(format('environments/{0}/.terraform.lock.hcl', inputs.environment)) }}
+          restore-keys: |
+            terraform-providers-${{ runner.os }}-${{ env.TERRAFORM_VERSION }}-${{ inputs.environment }}-
       - name: terraform apply
         env:
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
