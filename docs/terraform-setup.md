@@ -22,10 +22,16 @@ locales son inválidas o expiraron; no es un error de Terraform.
 ```bash
 cd bootstrap
 cp terraform.tfvars.example terraform.tfvars
-# Editar: state_bucket_name = "aditsystem-tf-state-<ACCOUNT_ID>"
 terraform init
 terraform apply
 ```
+
+El bootstrap es el primer estado de Terraform y por eso no usa un backend
+remoto: crea el bucket S3 que los demás entornos usarán después. Para la cuenta
+`810626480386`, la plantilla ya contiene los valores correctos; no pases
+secretos ni `-var`. Conserva `bootstrap/terraform.tfstate` localmente y vuelve
+a usarlo para actualizar el bootstrap. Es un state diferente de
+`dev/terraform.tfstate`, que se almacenará en el bucket creado tras este apply.
 
 Anota los outputs `state_bucket` y `dynamodb_table`.
 

@@ -37,20 +37,37 @@ configura un perfil válido con `aws configure --profile aditsystem-admin`.
 
 ## Pasos
 
+`bootstrap/` no tiene bloque `backend` intencionalmente: es el primer estado
+y crea el bucket S3 que será el backend remoto de `environments/dev` y
+`environments/prod`. Su estado queda inicialmente en
+`bootstrap/terraform.tfstate`; consérvalo y no lo subas a Git.
+
+Para la cuenta `810626480386`, la plantilla contiene los valores correctos:
+
 ```bash
+git checkout main && git pull
 cd bootstrap
 cp terraform.tfvars.example terraform.tfvars
-```
-
-Edita `terraform.tfvars`:
-- `state_bucket_name`: reemplaza `TU_ACCOUNT_ID` con tu AWS Account ID (`aws sts get-caller-identity --query Account --output text`)
-- Ajusta `aws_region` si no usas `mx-central-1`
-
-```bash
 terraform init
-terraform plan   # revisa que solo crea lo esperado
+terraform plan
 terraform apply
 ```
+
+El archivo copiado queda así; no se requieren `-var` ni secretos:
+
+```hcl
+aws_region        = "mx-central-1"
+project_name      = "aditsystem"
+state_bucket_name = "aditsystem-tf-state-810626480386"
+github_org        = "Westfold-Advisory"
+github_repo       = "aditsystem-infrastructure"
+```
+
+`state_bucket_name` debe ser globalmente único. Si AWS informa que ya existe,
+no elijas otro nombre sin antes confirmar que no corresponde al state existente
+del proyecto. Para un primer bootstrap de esta cuenta, el valor mostrado es el
+nombre previsto. En ejecuciones posteriores vuelve a usar el mismo directorio
+y su `terraform.tfstate` local: este state es distinto del de `dev`.
 
 Si el role ya existía y el pipeline falla por permisos AWS, vuelve a ejecutar este bootstrap para que Terraform actualice la policy adjunta al role antes de relanzar `Terraform Apply`.
 
@@ -70,6 +87,16 @@ backend_config_prod     = (contenido para config/backend-prod.hcl)
 terraform output -raw backend_config_dev  > ../config/backend-dev.hcl
 terraform output -raw backend_config_prod > ../config/backend-prod.hcl
 ```
+
+Configura estas variables de repositorio en GitHub con los outputs/valores del
+bootstrap antes de ejecutar el workflow remoto:
+
+| Variable | Valor |
+|----------|-------|
+| `AWS_REGION` | `mx-central-1` |
+| `TF_STATE_BUCKET` | `aditsystem-tf-state-810626480386` |
+| `TF_BACKEND_REGION` | `mx-central-1` |
+| `TF_REMOTE_STATE_ENABLED` | `true` |
 
 ### 2. Configurar las variables en GitHub
 
