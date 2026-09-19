@@ -171,11 +171,45 @@ data "aws_iam_policy_document" "terraform_github" {
       "s3:GetBucketPolicy",
       "s3:PutBucketPolicy",
       "s3:DeleteBucketPolicy",
+      "s3:GetBucketWebsite",
+      "s3:PutBucketWebsite",
+      "s3:DeleteBucketWebsite",
+      "s3:GetBucketTagging",
+      "s3:PutBucketTagging",
+      "s3:DeleteBucketTagging",
       "s3:ListBucket",
     ]
     resources = [
       "arn:aws:s3:::${var.project_name}-*",
     ]
+  }
+
+  # The AWS provider performs additional read calls while refreshing state.
+  # These actions are read-only and cover every Terraform resource in dev/prod.
+  # AWS does not support resource-level permissions for most Describe/List APIs.
+  statement {
+    sid = "ReadTerraformProviderState"
+    actions = [
+      "ec2:Describe*",
+      "ecr:Describe*",
+      "ecr:GetLifecyclePolicy",
+      "ecr:GetRepositoryPolicy",
+      "ecr:List*",
+      "iam:Get*",
+      "iam:List*",
+      "kms:Describe*",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:List*",
+      "logs:Describe*",
+      "logs:List*",
+      "rds:Describe*",
+      "rds:ListTagsForResource",
+      "secretsmanager:Describe*",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:List*",
+    ]
+    resources = ["*"]
   }
 
   statement {
@@ -220,6 +254,8 @@ data "aws_iam_policy_document" "terraform_github" {
       "iam:GetInstanceProfile",
       "iam:AddRoleToInstanceProfile",
       "iam:RemoveRoleFromInstanceProfile",
+      "iam:TagInstanceProfile",
+      "iam:UntagInstanceProfile",
     ]
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-*",
