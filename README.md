@@ -57,13 +57,14 @@ terraform validate
 
 | Workflow | Cuándo | Acciones |
 |----------|--------|----------|
-| [terraform-ci.yml](.github/workflows/terraform-ci.yml) | PR y push a `main` | `fmt`, `validate`, `plan` |
+| [terraform-ci.yml](.github/workflows/terraform-ci.yml) | PR y push a `main` | PR: `fmt`, `validate`, planes; `main`: `fmt`, `validate` |
 | [terraform-apply.yml](.github/workflows/terraform-apply.yml) | Manual (`workflow_dispatch`) | `plan` + `apply` con GitHub Environment |
 
 Documentación:
 
 - [docs/terraform-setup.md](docs/terraform-setup.md) — bootstrap S3/DynamoDB + OIDC
 - [docs/github-secrets-checklist.md](docs/github-secrets-checklist.md) — secrets y variables
+- [docs/terraform-ci-performance.md](docs/terraform-ci-performance.md) — línea base, caché y medición del CI
 
 Los entornos Terraform también exponen outputs para poblar el repo frontend `Westfold-Advisory/ADITSYSTEM` con:
 
