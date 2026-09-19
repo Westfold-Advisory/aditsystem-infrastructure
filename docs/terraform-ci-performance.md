@@ -16,8 +16,13 @@ el run 35434183370 duró 7 min 08 s.
 
 ## Cambio y señal conservada
 
-- En cada PR se conservan `fmt`, `validate` para `dev` y `prod`, el plan local
-  y, cuando está habilitado el estado remoto, el plan con AWS.
+- En cada PR se conservan `fmt`, `validate` para `dev` y `prod`, y el plan
+  remoto con AWS cuando está habilitado el estado remoto. El antiguo plan
+  "local" se elimina: con un bloque `backend "s3"`, `init -backend=false`
+  permite validar proveedores pero no inicializa un backend sobre el que
+  `terraform plan` pueda operar. El pipeline previo ocultaba ese error al
+  canalizar el comando por `tee` sin `pipefail`; por tanto no era una señal de
+  aprobación válida y duplicaba el plan remoto autorizado.
 - En `main` se conservan `fmt` y `validate`; se eliminan los planes duplicados.
   El apply sigue siendo manual, protegido por GitHub Environment, y siempre
   crea un plan nuevo para el SHA que se va a aplicar. Un plan de PR no se
@@ -39,6 +44,6 @@ persistentes.
 Después de mergear este cambio, comparar al menos cinco ejecuciones exitosas
 de cada evento con la línea base usando GitHub Actions (tiempo desde
 `created_at` hasta `updated_at`). Registrar mediana y rango. Se espera que los
-pushes a `main` finalicen antes al omitir los dos planes; los PRs se benefician
-del caché cuando el lockfile no cambie. No se promete un porcentaje fijo: la
+pushes a `main` finalicen antes al omitir los planes duplicados; los PRs se
+benefician del caché cuando el lockfile no cambie. No se promete un porcentaje fijo: la
 descarga inicial del caché y la disponibilidad de runners afectan cada run.
