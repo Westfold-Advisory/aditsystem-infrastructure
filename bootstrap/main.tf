@@ -289,6 +289,7 @@ data "aws_iam_policy_document" "terraform_github" {
   statement {
     sid = "ManageDevelopmentNetworkAndInstance"
     actions = [
+      "ec2:GetSecurityGroupsForVpc",
       "ec2:AssociateRouteTable",
       "ec2:AttachInternetGateway",
       "ec2:AuthorizeSecurityGroupEgress",
@@ -439,7 +440,8 @@ data "aws_iam_policy_document" "terraform_github_custom_domains" {
       "route53:GetHostedZone",
       "route53:ListHostedZones",
       "route53:ListResourceRecordSets",
-      "route53:ListTagsForResource"
+      "route53:ListTagsForResource",
+      "route53:GetChange",
     ]
     resources = ["*"]
   }
@@ -475,6 +477,25 @@ data "aws_iam_policy_document" "terraform_github_custom_domains" {
       "route53:ChangeResourceRecordSets",
     ]
     resources = ["*"]
+  }
+
+  statement {
+    sid    = "CreateELBServiceLinkedRole"
+    effect = "Allow"
+
+    actions = [
+      "iam:CreateServiceLinkedRole"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:AWSServiceName"
+      values = [
+        "elasticloadbalancing.amazonaws.com"
+      ]
+    }
   }
 }
 
