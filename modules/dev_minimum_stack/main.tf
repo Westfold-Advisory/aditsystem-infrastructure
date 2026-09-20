@@ -412,6 +412,12 @@ resource "aws_secretsmanager_secret" "bootstrap_admin" {
   }
 }
 
+# Team ADMIN email list for seed-team-admins on development EC2 (value: {"emails":"..."}).
+# Created outside Terraform if missing; instance profile needs GetSecretValue on this ARN.
+data "aws_secretsmanager_secret" "team_admin_emails" {
+  name = "${local.name_prefix}/team-admin-emails"
+}
+
 resource "aws_cloudwatch_log_group" "backend" {
   name              = "/${var.project_name}/${var.environment}/backend"
   retention_in_days = 7
@@ -503,6 +509,7 @@ data "aws_iam_policy_document" "backend_instance" {
     resources = [
       aws_secretsmanager_secret.backend_runtime.arn,
       aws_secretsmanager_secret.bootstrap_admin.arn,
+      data.aws_secretsmanager_secret.team_admin_emails.arn,
       aws_db_instance.postgres.master_user_secret[0].secret_arn,
     ]
     actions = ["secretsmanager:GetSecretValue"]
