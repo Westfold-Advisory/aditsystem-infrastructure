@@ -412,10 +412,16 @@ resource "aws_secretsmanager_secret" "bootstrap_admin" {
   }
 }
 
-# Team ADMIN email list for seed-team-admins on development EC2 (value: {"emails":"..."}).
-# Created outside Terraform if missing; instance profile needs GetSecretValue on this ARN.
-data "aws_secretsmanager_secret" "team_admin_emails" {
-  name = "${local.name_prefix}/team-admin-emails"
+# Team ADMIN email list for aditsystem-seed-team-admins (value set outside Terraform):
+# {"emails":"brandon.roldan.br2@gmail.com,ramirezmarco935@gmail.com,ascenddavid@gmail.com"}
+resource "aws_secretsmanager_secret" "team_admin_emails" {
+  name                    = "${local.name_prefix}/team-admin-emails"
+  description             = "Development team ADMIN email list for seed-team-admins CLI (JSON emails field)."
+  recovery_window_in_days = 7
+
+  tags = {
+    Purpose = "team-admin-emails"
+  }
 }
 
 resource "aws_cloudwatch_log_group" "backend" {
@@ -509,7 +515,7 @@ data "aws_iam_policy_document" "backend_instance" {
     resources = [
       aws_secretsmanager_secret.backend_runtime.arn,
       aws_secretsmanager_secret.bootstrap_admin.arn,
-      data.aws_secretsmanager_secret.team_admin_emails.arn,
+      aws_secretsmanager_secret.team_admin_emails.arn,
       aws_db_instance.postgres.master_user_secret[0].secret_arn,
     ]
     actions = ["secretsmanager:GetSecretValue"]
