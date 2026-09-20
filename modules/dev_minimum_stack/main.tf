@@ -449,8 +449,17 @@ data "aws_iam_policy_document" "backend_github" {
     actions   = ["ecr:GetAuthorizationToken"]
   }
   statement {
-    sid       = "PushOnlyToBackendRepository"
-    actions   = ["ecr:BatchCheckLayerAvailability", "ecr:CompleteLayerUpload", "ecr:InitiateLayerUpload", "ecr:PutImage", "ecr:UploadLayerPart", "ecr:BatchGetImage"]
+    sid = "PushOnlyToBackendRepository"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:CompleteLayerUpload",
+      "ecr:InitiateLayerUpload",
+      "ecr:PutImage",
+      "ecr:UploadLayerPart",
+      # BatchGetImage + GetDownloadUrlForLayer allow post-push Trivy scans if needed.
+      "ecr:BatchGetImage",
+      "ecr:GetDownloadUrlForLayer",
+    ]
     resources = [aws_ecr_repository.backend.arn]
   }
   statement {
