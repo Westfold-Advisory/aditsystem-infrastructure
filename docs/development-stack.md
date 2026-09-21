@@ -28,7 +28,6 @@ Después de `terraform apply`, tomar estos outputs de `environments/dev` y defin
 | `AWS_DEPLOY_ROLE_ARN` | `backend_github_deploy_role_arn` |
 | `AWS_EC2_INSTANCE_ID` | `backend_instance_id` |
 | `AWS_RUNTIME_SECRET_ARN` | `backend_runtime_secret_arn` |
-| `AWS_MEDIA_BUCKET` | `media_bucket_name` |
 | `AWS_DB_SECRET_ARN` | `database_master_secret_arn` |
 | `AWS_MEDIA_BUCKET_NAME` | `media_bucket_name` (presign de descarga TRA-152 → `DOCUMENTS_S3_BUCKET`) |
 
