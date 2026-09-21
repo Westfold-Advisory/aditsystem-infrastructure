@@ -123,6 +123,7 @@ output "backend_github_variables" {
     AWS_DEPLOY_ROLE_ARN = module.dev_minimum_stack.backend_github_deploy_role_arn
     AWS_DB_HOST         = module.dev_minimum_stack.database_endpoint
     AWS_DB_PORT         = module.dev_minimum_stack.database_port
+    AWS_MEDIA_BUCKET    = module.dev_minimum_stack.media_bucket_name
   }
 }
 output "frontend_domain_name" { value = var.enable_cloudfront && var.enable_custom_dns ? var.frontend_domain_name : null }
