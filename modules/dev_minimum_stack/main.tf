@@ -29,6 +29,13 @@ locals {
   backend_repository_name  = "${local.name_prefix}-backend"
   media_bucket_name        = "${local.name_prefix}-${data.aws_caller_identity.current.account_id}-media"
   github_oidc_provider_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+  # Browser PUT/GET to presigned S3 URLs sends the admin UI origin, not the API host.
+  media_upload_cors_origins = distinct(compact([
+    var.frontend_domain_name != "" ? "https://${var.frontend_domain_name}" : "",
+    var.frontend_website_endpoint != "" ? "http://${var.frontend_website_endpoint}" : "",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ]))
 }
 
 resource "aws_vpc" "this" {
@@ -393,6 +400,18 @@ resource "aws_s3_bucket_versioning" "media" {
   versioning_configuration { status = "Enabled" }
 }
 
+resource "aws_s3_bucket_cors_configuration" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD", "PUT"]
+    allowed_origins = local.media_upload_cors_origins
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
+
 resource "aws_secretsmanager_secret" "backend_runtime" {
   name                    = "${local.name_prefix}/backend-runtime"
   description             = "Runtime-only backend configuration (JWT PEM keys, CORS). Populate outside version control."
@@ -536,10 +555,16 @@ data "aws_iam_policy_document" "backend_instance" {
     actions = ["s3:GetObject", "s3:ListBucket"]
   }
   statement {
-    # The demo seed may write only its own fictional prefix.
-    sid       = "WriteDemoSeedMediaPrefix"
-    actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.media.arn}/demo/faker/*"]
+    # Presigned PUT (TRA-155) and faker seed sync write under fixed prefixes only.
+    sid = "WritePrivateMediaPrefixes"
+    actions = [
+      "s3:PutObject",
+      "s3:AbortMultipartUpload",
+    ]
+    resources = [
+      "${aws_s3_bucket.media.arn}/demo/faker/*",
+      "${aws_s3_bucket.media.arn}/personas/*",
+    ]
   }
 }
 resource "aws_iam_role_policy" "backend_instance" {
