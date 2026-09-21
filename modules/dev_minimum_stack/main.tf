@@ -535,6 +535,12 @@ data "aws_iam_policy_document" "backend_instance" {
     ]
     actions = ["s3:GetObject", "s3:ListBucket"]
   }
+  statement {
+    # The demo seed may write only its own fictional prefix.
+    sid       = "WriteDemoSeedMediaPrefix"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.media.arn}/demo/faker/*"]
+  }
 }
 resource "aws_iam_role_policy" "backend_instance" {
   name   = "runtime-access"
