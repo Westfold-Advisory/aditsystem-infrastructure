@@ -39,4 +39,39 @@ RDS administra la contraseña maestra en Secrets Manager mediante `manage_master
 
 La EC2 incluye Docker y un instance profile con SSM, lectura del secret runtime y de la contraseña RDS, lectura del ECR propio y escritura únicamente al log group del backend. En el bucket privado de medios puede leer objetos (`GetObject`), listar el bucket y escribir solo bajo `demo/faker/*` (seed QA) y `personas/*` (presign PUT TRA-155); no puede modificar otros prefijos. El bucket define CORS para `GET`/`HEAD`/`PUT` desde el origen del frontend (dominio custom, website S3 y `localhost:5173` en desarrollo local). El rol OIDC del backend puede publicar únicamente en ECR y ejecutar `AWS-RunShellScript` exclusivamente en esta EC2; no puede administrar EC2 ni leer secretos. El despliegue del contenedor y las migraciones se ejecutarán por SSM usando una etiqueta inmutable publicada por el pipeline backend; no se requiere ni se habilita SSH.
 
+### Poblar `backend-runtime` (paso manual único por ambiente)
+
+`scripts/deploy-ec2.sh` en `aditsystem-backend` lee este secret en cada despliegue y falla el deploy si faltan `jwt_private_key` o `jwt_public_key` — por diseño, ni el pipeline ni la instancia EC2 generan el par de llaves por sí mismos. Generarlas automáticamente ahí rotaría las llaves en cada despliegue (invalidando todos los tokens vigentes) o forzaría a guardar el secreto en GitHub Actions/Terraform, ambos prohibidos por las reglas de seguridad del proyecto. Por eso este es un paso manual, ejecutado una sola vez por ambiente (y de nuevo solo si se decide rotar las llaves) por quien tenga acceso a Secrets Manager:
+
+```bash
+# 1. Generar el par RS256 (no versionar, no dejar en disco tras el paso 2)
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/jwt-private.pem
+openssl rsa -pubout -in /tmp/jwt-private.pem -out /tmp/jwt-public.pem
+
+# 2. Obtener el ARN del secret (output de environments/dev)
+SECRET_ARN=$(terraform -chdir=environments/dev output -raw backend_runtime_secret_arn)
+
+# 3. Cargar el contenido runtime completo que espera scripts/deploy-ec2.sh
+python3 - "$SECRET_ARN" <<'PY'
+import json, subprocess, sys
+secret_arn = sys.argv[1]
+payload = {
+    "jwt_private_key": open("/tmp/jwt-private.pem").read(),
+    "jwt_public_key": open("/tmp/jwt-public.pem").read(),
+    "cors_allowed_origins": "https://<dominio-frontend-dev>",
+    "database_name": "aditsystem",
+}
+subprocess.run(
+    ["aws", "secretsmanager", "put-secret-value", "--secret-id", secret_arn,
+     "--secret-string", json.dumps(payload)],
+    check=True,
+)
+PY
+
+# 4. Borrar las llaves del disco local
+rm -f /tmp/jwt-private.pem /tmp/jwt-public.pem
+```
+
+Tras cargar el secret, el siguiente `push` a `main` de `aditsystem-backend` (o un re-run manual del job `deploy`) recoge las llaves en el próximo `scripts/deploy-ec2.sh` sin cambios adicionales en el pipeline ni en la EC2.
+
 Las opciones `enable_alb`, `enable_cloudfront`, `enable_waf`, `enable_custom_dns` y `enable_multi_az` existen con valor `false` por defecto. No crean recursos adicionales hasta que se diseñen esos componentes.
