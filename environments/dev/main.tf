@@ -118,12 +118,12 @@ output "backend_instance_id" { value = module.dev_minimum_stack.backend_instance
 output "backend_public_ip" { value = module.dev_minimum_stack.backend_public_ip }
 output "backend_github_variables" {
   value = {
-    AWS_REGION          = var.aws_region
-    AWS_ECR_REPOSITORY  = module.dev_minimum_stack.backend_ecr_repository
-    AWS_DEPLOY_ROLE_ARN = module.dev_minimum_stack.backend_github_deploy_role_arn
-    AWS_DB_HOST         = module.dev_minimum_stack.database_endpoint
-    AWS_DB_PORT         = module.dev_minimum_stack.database_port
-    AWS_MEDIA_BUCKET    = module.dev_minimum_stack.media_bucket_name
+    AWS_REGION            = var.aws_region
+    AWS_ECR_REPOSITORY    = module.dev_minimum_stack.backend_ecr_repository
+    AWS_DEPLOY_ROLE_ARN   = module.dev_minimum_stack.backend_github_deploy_role_arn
+    AWS_DB_HOST           = module.dev_minimum_stack.database_endpoint
+    AWS_DB_PORT           = module.dev_minimum_stack.database_port
+    AWS_MEDIA_BUCKET_NAME = module.dev_minimum_stack.media_bucket_name
   }
 }
 output "frontend_domain_name" { value = var.enable_cloudfront && var.enable_custom_dns ? var.frontend_domain_name : null }

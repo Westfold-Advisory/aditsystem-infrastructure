@@ -28,7 +28,6 @@ Después de `terraform apply`, tomar estos outputs de `environments/dev` y defin
 | `AWS_DEPLOY_ROLE_ARN` | `backend_github_deploy_role_arn` |
 | `AWS_EC2_INSTANCE_ID` | `backend_instance_id` |
 | `AWS_RUNTIME_SECRET_ARN` | `backend_runtime_secret_arn` |
-| `AWS_MEDIA_BUCKET` | `media_bucket_name` |
 | `AWS_DB_SECRET_ARN` | `database_master_secret_arn` |
 | `AWS_MEDIA_BUCKET_NAME` | `media_bucket_name` (presign de descarga TRA-152 → `DOCUMENTS_S3_BUCKET`) |
 
@@ -38,6 +37,6 @@ El trust policy exige exactamente `repo:Westfold-Advisory/aditsystem-backend:env
 
 RDS administra la contraseña maestra en Secrets Manager mediante `manage_master_user_password`; su ARN se entrega como output sensible. El secret `${project}-${environment}/backend-runtime` se crea vacío para que las claves JWT y la lista CORS se carguen fuera de Git y del estado Terraform. Nunca registrar su contenido en logs ni variables públicas del frontend.
 
-La EC2 incluye Docker y un instance profile con SSM, lectura del secret runtime y de la contraseña RDS, lectura del ECR propio y escritura únicamente al log group del backend. También puede leer/escribir exclusivamente el prefijo `demo/faker/*` del bucket privado de medios para el seed de QA; no puede listar ni modificar otros objetos. El rol OIDC del backend puede publicar únicamente en ECR y ejecutar `AWS-RunShellScript` exclusivamente en esta EC2; no puede administrar EC2 ni leer secretos. El despliegue del contenedor y las migraciones se ejecutarán por SSM usando una etiqueta inmutable publicada por el pipeline backend; no se requiere ni se habilita SSH.
+La EC2 incluye Docker y un instance profile con SSM, lectura del secret runtime y de la contraseña RDS, lectura del ECR propio y escritura únicamente al log group del backend. Puede leer los objetos del bucket privado de medios para generar URLs presignadas y escribir exclusivamente el prefijo `demo/faker/*` durante el seed de QA. El rol OIDC del backend puede publicar únicamente en ECR y ejecutar `AWS-RunShellScript` exclusivamente en esta EC2; no puede administrar EC2 ni leer secretos. El despliegue del contenedor y las migraciones se ejecutarán por SSM usando una etiqueta inmutable publicada por el pipeline backend; no se requiere ni se habilita SSH.
 
 Las opciones `enable_alb`, `enable_cloudfront`, `enable_waf`, `enable_custom_dns` y `enable_multi_az` existen con valor `false` por defecto. No crean recursos adicionales hasta que se diseñen esos componentes.
