@@ -528,6 +528,13 @@ data "aws_iam_policy_document" "backend_instance" {
     resources = ["${aws_cloudwatch_log_group.backend.arn}:*"]
     actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
   }
+  statement {
+    resources = [
+      aws_s3_bucket.media.arn,
+      "${aws_s3_bucket.media.arn}/*",
+    ]
+    actions = ["s3:GetObject", "s3:ListBucket"]
+  }
 }
 resource "aws_iam_role_policy" "backend_instance" {
   name   = "runtime-access"

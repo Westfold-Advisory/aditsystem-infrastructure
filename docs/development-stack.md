@@ -29,6 +29,7 @@ Después de `terraform apply`, tomar estos outputs de `environments/dev` y defin
 | `AWS_EC2_INSTANCE_ID` | `backend_instance_id` |
 | `AWS_RUNTIME_SECRET_ARN` | `backend_runtime_secret_arn` |
 | `AWS_DB_SECRET_ARN` | `database_master_secret_arn` |
+| `AWS_MEDIA_BUCKET_NAME` | `media_bucket_name` (presign de descarga TRA-152 → `DOCUMENTS_S3_BUCKET`) |
 
 El trust policy exige exactamente `repo:Westfold-Advisory/aditsystem-backend:environment:development`. El rol sólo puede obtener un token ECR y subir capas/manifiestos al repositorio creado; no puede administrar EC2, secretos ni otros repositorios. No se usan access keys persistentes.
 
