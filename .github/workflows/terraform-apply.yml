@@ -41,6 +41,8 @@ jobs:
           # an empty environment secret from silently disabling OIDC.
           role-to-assume: arn:aws:iam::810626480386:role/aditsystem-terraform-github-actions
           aws-region: ${{ vars.AWS_REGION }}
+      - name: Create Terraform provider cache directory
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
