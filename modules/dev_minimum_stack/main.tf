@@ -611,3 +611,102 @@ resource "aws_instance" "backend" {
   }
   tags = { Name = "${local.name_prefix}-backend" }
 }
+
+# Development cost schedule: API and database are intentionally unavailable
+# overnight. EventBridge Scheduler handles DST through the IANA timezone.
+data "aws_iam_policy_document" "daily_cost_schedule_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["scheduler.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "daily_cost_schedule" {
+  count              = var.enable_daily_cost_schedule ? 1 : 0
+  name               = "${local.name_prefix}-daily-cost-schedule"
+  assume_role_policy = data.aws_iam_policy_document.daily_cost_schedule_assume.json
+}
+
+data "aws_iam_policy_document" "daily_cost_schedule" {
+  statement {
+    sid       = "ManageScheduledBackendInstance"
+    actions   = ["ec2:StartInstances", "ec2:StopInstances"]
+    resources = [aws_instance.backend.arn]
+  }
+
+  statement {
+    sid       = "ManageScheduledDatabase"
+    actions   = ["rds:StartDBInstance", "rds:StopDBInstance"]
+    resources = [aws_db_instance.postgres.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "daily_cost_schedule" {
+  count  = var.enable_daily_cost_schedule ? 1 : 0
+  name   = "start-stop-development-runtime"
+  role   = aws_iam_role.daily_cost_schedule[0].id
+  policy = data.aws_iam_policy_document.daily_cost_schedule.json
+}
+
+resource "aws_scheduler_schedule" "backend_stop" {
+  count                        = var.enable_daily_cost_schedule ? 1 : 0
+  name                         = "${local.name_prefix}-backend-stop-overnight"
+  schedule_expression          = "cron(0 0 * * ? *)"
+  schedule_expression_timezone = var.daily_cost_schedule_timezone
+
+  flexible_time_window { mode = "OFF" }
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:ec2:stopInstances"
+    role_arn = aws_iam_role.daily_cost_schedule[0].arn
+    input    = jsonencode({ InstanceIds = [aws_instance.backend.id] })
+  }
+}
+
+resource "aws_scheduler_schedule" "database_stop" {
+  count                        = var.enable_daily_cost_schedule ? 1 : 0
+  name                         = "${local.name_prefix}-database-stop-overnight"
+  schedule_expression          = "cron(0 0 * * ? *)"
+  schedule_expression_timezone = var.daily_cost_schedule_timezone
+
+  flexible_time_window { mode = "OFF" }
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:rds:stopDBInstance"
+    role_arn = aws_iam_role.daily_cost_schedule[0].arn
+    input    = jsonencode({ DbInstanceIdentifier = aws_db_instance.postgres.identifier })
+  }
+}
+
+resource "aws_scheduler_schedule" "database_start" {
+  count                        = var.enable_daily_cost_schedule ? 1 : 0
+  name                         = "${local.name_prefix}-database-start-morning"
+  schedule_expression          = "cron(0 11 * * ? *)"
+  schedule_expression_timezone = var.daily_cost_schedule_timezone
+
+  flexible_time_window { mode = "OFF" }
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:rds:startDBInstance"
+    role_arn = aws_iam_role.daily_cost_schedule[0].arn
+    input    = jsonencode({ DbInstanceIdentifier = aws_db_instance.postgres.identifier })
+  }
+}
+
+resource "aws_scheduler_schedule" "backend_start" {
+  count                        = var.enable_daily_cost_schedule ? 1 : 0
+  name                         = "${local.name_prefix}-backend-start-morning"
+  schedule_expression          = "cron(0 11 * * ? *)"
+  schedule_expression_timezone = var.daily_cost_schedule_timezone
+
+  flexible_time_window { mode = "OFF" }
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:ec2:startInstances"
+    role_arn = aws_iam_role.daily_cost_schedule[0].arn
+    input    = jsonencode({ InstanceIds = [aws_instance.backend.id] })
+  }
+}

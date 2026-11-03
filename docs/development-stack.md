@@ -17,6 +17,10 @@ RDS es Single-AZ, cifrado con una CMK dedicada administrada por Terraform, sin a
 
 No se crea NAT Gateway para desarrollo. La instancia está en una subred pública exclusivamente para obtener actualizaciones, ECR, SSM, Secrets Manager y CloudWatch a través del Internet Gateway; su grupo de seguridad no expone SSH y exige IMDSv2. RDS y S3 de medios no son públicos. El puerto 8000 queda expuesto temporalmente para el flujo público; antes de producción debe sustituirse por ALB/HTTPS y limitarse el origen.
 
+## Ahorro nocturno
+
+El entorno `dev` programa EC2 y RDS para detenerse a las **00:00** y arrancar a las **11:00**, zona `America/Mexico_City`, todos los días. Durante ese intervalo la API y la base de datos no están disponibles; S3, CloudFront, Secrets Manager y los artefactos permanecen disponibles. El scheduler está controlado por `enable_daily_cost_schedule` (activado por defecto sólo en `environments/dev`) y se aplica exclusivamente mediante el pipeline Terraform.
+
 ## Entrega backend por GitHub Actions
 
 Después de `terraform apply`, tomar estos outputs de `environments/dev` y definirlos como variables del GitHub Environment `development` en `Westfold-Advisory/aditsystem-backend`:
