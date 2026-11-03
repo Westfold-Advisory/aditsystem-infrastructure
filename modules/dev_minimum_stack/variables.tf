@@ -21,6 +21,18 @@ variable "backend_port" {
   default = 8000
 }
 
+variable "enable_daily_cost_schedule" {
+  description = "Enable the development-only schedule that stops EC2/RDS overnight and starts them each morning."
+  type        = bool
+  default     = false
+}
+
+variable "daily_cost_schedule_timezone" {
+  description = "IANA timezone used by the development cost schedule."
+  type        = string
+  default     = "America/Mexico_City"
+}
+
 variable "db_name" {
   type    = string
   default = "aditsystem"

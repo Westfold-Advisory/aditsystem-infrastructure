@@ -35,6 +35,11 @@ variable "enable_cloudfront" { default = true }
 variable "enable_waf" { default = false }
 variable "enable_custom_dns" { default = true }
 variable "enable_multi_az" { default = false }
+variable "enable_daily_cost_schedule" {
+  description = "Stop development EC2/RDS at midnight and start them at 11:00 in Mexico City time."
+  type        = bool
+  default     = true
+}
 variable "route53_zone_name" {
   type    = string
   default = "aditsystem-dev.ervic.pro"
@@ -62,23 +67,24 @@ module "frontend_deploy_target" {
 module "dev_minimum_stack" {
   source = "../../modules/dev_minimum_stack"
 
-  project_name              = "aditsystem"
-  environment               = "dev"
-  aws_region                = var.aws_region
-  availability_zones        = var.availability_zones
-  backend_repository_owner  = "Westfold-Advisory"
-  backend_repository_name   = "aditsystem-backend"
-  github_environment_name   = "development"
-  enable_alb                = var.enable_alb
-  enable_cloudfront         = var.enable_cloudfront
-  enable_waf                = var.enable_waf
-  enable_custom_dns         = var.enable_custom_dns
-  enable_multi_az           = var.enable_multi_az
-  route53_zone_name         = var.route53_zone_name
-  frontend_domain_name      = var.frontend_domain_name
-  api_domain_name           = var.api_domain_name
-  frontend_website_endpoint = module.frontend_deploy_target.website_endpoint
-  providers                 = { aws = aws, aws.us_east_1 = aws.us_east_1 }
+  project_name               = "aditsystem"
+  environment                = "dev"
+  aws_region                 = var.aws_region
+  availability_zones         = var.availability_zones
+  backend_repository_owner   = "Westfold-Advisory"
+  backend_repository_name    = "aditsystem-backend"
+  github_environment_name    = "development"
+  enable_alb                 = var.enable_alb
+  enable_cloudfront          = var.enable_cloudfront
+  enable_waf                 = var.enable_waf
+  enable_custom_dns          = var.enable_custom_dns
+  enable_multi_az            = var.enable_multi_az
+  enable_daily_cost_schedule = var.enable_daily_cost_schedule
+  route53_zone_name          = var.route53_zone_name
+  frontend_domain_name       = var.frontend_domain_name
+  api_domain_name            = var.api_domain_name
+  frontend_website_endpoint  = module.frontend_deploy_target.website_endpoint
+  providers                  = { aws = aws, aws.us_east_1 = aws.us_east_1 }
 }
 
 output "environment" {
